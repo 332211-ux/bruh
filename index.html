@@ -1,0 +1,1133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>我的在线日记本</title>
+  <meta name="description" content="一个基于 GitHub Pages 和 GitHub API 的在线可编辑日记本网站" />
+  <style>
+    :root {
+      --paper: #fffaf0;
+      --paper-2: #fff5df;
+      --ink: #3a2d24;
+      --muted: #8a7464;
+      --line: rgba(118, 88, 62, 0.18);
+      --accent: #9b6a43;
+      --accent-2: #d9a35e;
+      --accent-3: #6f4e37;
+      --bg: #ede0cf;
+      --success: #477a4f;
+      --warning: #9a6b20;
+      --danger: #9d3f36;
+      --shadow: 0 24px 70px rgba(62, 42, 25, 0.18);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: ui-serif, "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 34%),
+        linear-gradient(135deg, #ead9c4 0%, #f9f0e1 48%, #dfc3a5 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(94, 68, 45, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 68, 45, 0.035) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mix-blend-mode: multiply;
+    }
+
+    .shell {
+      width: min(1220px, calc(100vw - 32px));
+      min-height: calc(100vh - 44px);
+      margin: 22px auto;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      background: rgba(255, 250, 240, 0.84);
+      border: 1px solid rgba(111, 78, 55, 0.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    aside {
+      position: relative;
+      padding: 28px 20px 24px 24px;
+      background:
+        linear-gradient(180deg, rgba(255, 249, 235, 0.96), rgba(242, 224, 199, 0.94)),
+        repeating-linear-gradient(0deg, transparent 0 31px, rgba(111, 78, 55, 0.1) 32px);
+      border-right: 1px solid var(--line);
+      min-height: 100%;
+    }
+
+    aside::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      top: 0;
+      width: 18px;
+      height: 100%;
+      background: radial-gradient(circle, rgba(111, 78, 55, 0.19) 1.8px, transparent 2px) 0 16px / 18px 38px repeat-y;
+      opacity: 0.7;
+    }
+
+    main {
+      position: relative;
+      padding: 38px 52px 44px 54px;
+      background:
+        linear-gradient(90deg, rgba(165, 91, 76, 0.12) 0 2px, transparent 2px 100%) 42px 0 / 100% 100%,
+        repeating-linear-gradient(0deg, transparent 0 33px, rgba(90, 65, 45, 0.08) 34px),
+        linear-gradient(180deg, rgba(255, 253, 247, 0.96), rgba(255, 247, 230, 0.98));
+      min-width: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #b87b4a, #f1c27d);
+      color: #fff8ed;
+      box-shadow: 0 10px 25px rgba(139, 93, 51, 0.28);
+      font-size: 22px;
+    }
+
+    h1 {
+      font-size: 26px;
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: 0.08em;
+    }
+
+    .subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toolbar, .entry-actions, .settings-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toolbar { margin: 17px 0; }
+
+    button, .file-label {
+      appearance: none;
+      border: 1px solid rgba(111, 78, 55, 0.24);
+      background: rgba(255, 255, 255, 0.56);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, border 0.15s ease;
+      box-shadow: 0 5px 14px rgba(111, 78, 55, 0.08);
+    }
+
+    button:hover, .file-label:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.86);
+      border-color: rgba(111, 78, 55, 0.42);
+    }
+
+    button:disabled {
+      opacity: 0.56;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button.primary {
+      color: #fff9ee;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent;
+    }
+
+    button.danger {
+      color: #8b342e;
+      background: rgba(255, 235, 230, 0.78);
+      border-color: rgba(160, 57, 46, 0.22);
+    }
+
+    button.success {
+      color: #fff;
+      background: linear-gradient(135deg, #557f52, #86a75b);
+      border-color: transparent;
+    }
+
+    input[type="file"] { display: none; }
+
+    .search {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.54);
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: var(--ink);
+      outline: none;
+      font-family: inherit;
+      font-size: 14px;
+      margin: 2px 0 14px;
+    }
+
+    .search:focus { border-color: rgba(155, 106, 67, 0.5); }
+
+    .cloud-card {
+      border: 1px solid rgba(111, 78, 55, 0.14);
+      background: rgba(255, 255, 255, 0.42);
+      border-radius: 18px;
+      padding: 12px 13px;
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .cloud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: rgba(111, 78, 55, 0.1);
+      color: var(--accent-3);
+      white-space: nowrap;
+    }
+
+    .badge.success { background: rgba(71, 122, 79, 0.14); color: var(--success); }
+    .badge.warning { background: rgba(154, 107, 32, 0.14); color: var(--warning); }
+    .badge.danger { background: rgba(157, 63, 54, 0.13); color: var(--danger); }
+
+    .entry-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: calc(100vh - 348px);
+      overflow: auto;
+      padding-right: 5px;
+    }
+
+    .entry-item {
+      text-align: left;
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid transparent;
+      padding: 12px 13px;
+      background: rgba(255, 255, 255, 0.34);
+      box-shadow: none;
+    }
+
+    .entry-item.active {
+      background: rgba(255, 255, 255, 0.86);
+      border-color: rgba(155, 106, 67, 0.28);
+      box-shadow: 0 12px 28px rgba(111, 78, 55, 0.12);
+    }
+
+    .entry-date {
+      display: inline-flex;
+      font-size: 12px;
+      color: #fff8ed;
+      background: rgba(111, 78, 55, 0.78);
+      border-radius: 999px;
+      padding: 3px 8px;
+      margin-bottom: 7px;
+    }
+
+    .entry-title {
+      display: block;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .entry-preview {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .status {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    .date-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: rgba(155, 106, 67, 0.11);
+      color: var(--accent-3);
+      font-size: 13px;
+      white-space: nowrap;
+      border: 1px solid rgba(111, 78, 55, 0.13);
+    }
+
+    .view-title {
+      font-size: clamp(31px, 5vw, 54px);
+      line-height: 1.12;
+      margin: 10px 0 10px;
+      letter-spacing: 0.02em;
+      max-width: 760px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: rgba(223, 195, 165, 0.38);
+      padding: 5px 10px;
+      color: var(--accent-3);
+    }
+
+    .content {
+      font-size: 18px;
+      line-height: 2.05;
+      white-space: pre-wrap;
+      max-width: 780px;
+      min-height: 360px;
+    }
+
+    .empty-state {
+      height: 70vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state b {
+      color: var(--ink);
+      font-size: 28px;
+    }
+
+    .editor, .settings-panel { display: none; max-width: 840px; }
+    .editor.active, .settings-panel.active { display: block; }
+    .viewer.hidden { display: none; }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    label span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 0 6px 2px;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px 15px;
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: rgba(155, 106, 67, 0.55);
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    textarea {
+      min-height: 410px;
+      resize: vertical;
+      line-height: 1.8;
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .check-row {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .check-row input { width: auto; margin-top: 4px; }
+
+    .small-note, .help-box {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+      margin: 12px 0 0;
+    }
+
+    .help-box {
+      border: 1px solid rgba(111, 78, 55, 0.15);
+      background: rgba(255, 255, 255, 0.42);
+      border-radius: 18px;
+      padding: 14px 15px;
+      margin-top: 16px;
+    }
+
+    .help-box code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(111, 78, 55, 0.1);
+      border-radius: 8px;
+      padding: 1px 5px;
+      color: var(--accent-3);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(58, 45, 36, 0.92);
+      color: #fff9ef;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 10;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        width: min(100vw - 18px, 740px);
+        margin: 9px auto;
+        grid-template-columns: 1fr;
+      }
+
+      aside { border-right: none; border-bottom: 1px solid var(--line); }
+      aside::after { display: none; }
+      .entry-list { max-height: 280px; }
+      main {
+        padding: 28px 24px 34px;
+        background:
+          repeating-linear-gradient(0deg, transparent 0 33px, rgba(90, 65, 45, 0.08) 34px),
+          linear-gradient(180deg, rgba(255, 253, 247, 0.97), rgba(255, 247, 230, 0.98));
+      }
+      .topline, .two-cols { grid-template-columns: 1fr; flex-direction: column; }
+      .content { font-size: 16px; }
+      .view-title { font-size: 34px; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .shell { box-shadow: none; width: 100%; min-height: auto; margin: 0; grid-template-columns: 1fr; }
+      aside, .entry-actions, .toolbar, .small-note, .help-box { display: none; }
+      main { padding: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark">✦</div>
+        <div>
+          <h1>我的日记本</h1>
+          <p class="subtitle">GitHub online journal</p>
+        </div>
+      </div>
+
+      <div class="cloud-card">
+        <div class="cloud-row">
+          <b>云端同步</b>
+          <span id="cloudBadge" class="badge warning">未配置</span>
+        </div>
+        <div id="cloudInfo">公开浏览不需要登录；编辑保存需要你的 GitHub Token。</div>
+      </div>
+
+      <input id="searchInput" class="search" placeholder="搜索日期、标题、正文……" />
+
+      <div class="toolbar">
+        <button class="primary" id="newBtn">新增日记</button>
+        <button id="refreshBtn">刷新云端</button>
+        <button id="settingsBtn">GitHub 设置</button>
+        <button id="exportBtn">导出备份</button>
+      </div>
+
+      <div id="entryList" class="entry-list" aria-label="日记目录"></div>
+      <p class="status" id="statusText"></p>
+    </aside>
+
+    <main>
+      <section id="viewer" class="viewer">
+        <div class="topline">
+          <div>
+            <div id="viewDate" class="date-pill">—</div>
+            <h2 id="viewTitle" class="view-title">请选择一篇日记</h2>
+          </div>
+          <div class="entry-actions">
+            <button id="editBtn">进入编辑</button>
+            <button id="settingsBtnTop">同步设置</button>
+          </div>
+        </div>
+        <div id="viewMeta" class="meta"></div>
+        <article id="viewContent" class="content"></article>
+        <p class="small-note">公开访问者只能阅读。你本人在“GitHub 设置”中填入 Token 后，点击保存会直接更新仓库里的 <code>data/entries.json</code>。</p>
+      </section>
+
+      <section id="emptyState" class="empty-state" hidden>
+        <div>
+          <b>还没有日记</b>
+          <p>点击左侧“新增日记”，开始写第一篇。</p>
+        </div>
+      </section>
+
+      <section id="editor" class="editor" aria-label="日记编辑器">
+        <div class="topline">
+          <div>
+            <div class="date-pill">编辑模式</div>
+            <h2 class="view-title">修改这一天</h2>
+          </div>
+          <div class="entry-actions">
+            <button class="success" id="saveBtn">保存到 GitHub</button>
+            <button id="cancelBtn">取消</button>
+            <button class="danger" id="deleteBtn">删除</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            <span>日期</span>
+            <input id="dateInput" type="date" />
+          </label>
+          <label>
+            <span>标题</span>
+            <input id="titleInput" placeholder="这一天的标题" />
+          </label>
+          <label>
+            <span>心情</span>
+            <input id="moodInput" placeholder="例如：开心 / 平静 / 有点累" />
+          </label>
+          <label>
+            <span>标签，用中文逗号或英文逗号分隔</span>
+            <input id="tagsInput" placeholder="工作，生活，灵感" />
+          </label>
+          <label>
+            <span>正文</span>
+            <textarea id="contentInput" placeholder="写下今天发生的事……"></textarea>
+          </label>
+        </div>
+        <p class="small-note">保存会向 GitHub 提交一次 commit。若提示冲突，请先刷新云端，再重新保存。</p>
+      </section>
+
+      <section id="settingsPanel" class="settings-panel" aria-label="GitHub 同步设置">
+        <div class="topline">
+          <div>
+            <div class="date-pill">GitHub 设置</div>
+            <h2 class="view-title">连接你的仓库</h2>
+          </div>
+          <div class="settings-actions">
+            <button class="primary" id="saveSettingsBtn">保存设置</button>
+            <button id="testBtn">测试连接</button>
+            <button id="backBtn">返回</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="two-cols">
+            <label>
+              <span>GitHub 用户名或组织名 Owner</span>
+              <input id="ownerInput" placeholder="例如：wangjiaqi332211" autocomplete="off" />
+            </label>
+            <label>
+              <span>仓库名 Repository</span>
+              <input id="repoInput" placeholder="例如：my-diary" autocomplete="off" />
+            </label>
+          </div>
+          <div class="two-cols">
+            <label>
+              <span>分支 Branch</span>
+              <input id="branchInput" placeholder="main" value="main" autocomplete="off" />
+            </label>
+            <label>
+              <span>数据文件路径</span>
+              <input id="pathInput" placeholder="data/entries.json" value="data/entries.json" autocomplete="off" />
+            </label>
+          </div>
+          <label>
+            <span>GitHub Fine-grained Personal Access Token</span>
+            <input id="tokenInput" type="password" placeholder="只在你的浏览器里使用，不要上传到仓库" autocomplete="off" />
+          </label>
+          <label class="check-row">
+            <input id="rememberTokenInput" type="checkbox" />
+            <span>把 Token 记在当前浏览器。更安全的做法是不勾选，这样关闭浏览器后需要重新输入。</span>
+          </label>
+        </div>
+
+        <div class="help-box">
+          <b>Token 权限建议</b><br />
+          选择 Fine-grained token，只授权这个日记仓库；Repository permissions 里给 <code>Contents</code> 开 <code>Read and write</code>。不要把 Token 写进 HTML，也不要发给别人。<br /><br />
+          <b>仓库结构</b><br />
+          <code>index.html</code> 放网站页面，<code>data/entries.json</code> 放日记数据。GitHub Pages 开启后，别人访问网页即可查看。
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const DEFAULT_DATA_PATH = "data/entries.json";
+    const CONFIG_KEY = "diary_github_config_v2";
+    const TOKEN_SESSION_KEY = "diary_github_token_session_v2";
+    const TOKEN_LOCAL_KEY = "diary_github_token_local_v2";
+    const BACKUP_KEY = "diary_entries_local_backup_v2";
+
+    let entries = [];
+    let currentId = null;
+    let config = { owner: "", repo: "", branch: "main", path: DEFAULT_DATA_PATH };
+    let remoteSha = null;
+    let isSaving = false;
+
+    const sampleEntries = [
+      {
+        id: "entry-2026-06-24",
+        date: "2026-06-24",
+        title: "第一篇日记",
+        mood: "平静",
+        tags: ["示例", "开始"],
+        content: "这是一个示例页面。\n\n把本文件部署到 GitHub Pages 后，公开访问者可以查看。你填入 GitHub Token 后，可以在线编辑并保存到仓库。"
+      }
+    ];
+
+    const els = {
+      list: document.getElementById("entryList"),
+      search: document.getElementById("searchInput"),
+      status: document.getElementById("statusText"),
+      cloudBadge: document.getElementById("cloudBadge"),
+      cloudInfo: document.getElementById("cloudInfo"),
+      viewer: document.getElementById("viewer"),
+      editor: document.getElementById("editor"),
+      settings: document.getElementById("settingsPanel"),
+      empty: document.getElementById("emptyState"),
+      viewDate: document.getElementById("viewDate"),
+      viewTitle: document.getElementById("viewTitle"),
+      viewMeta: document.getElementById("viewMeta"),
+      viewContent: document.getElementById("viewContent"),
+      newBtn: document.getElementById("newBtn"),
+      refreshBtn: document.getElementById("refreshBtn"),
+      settingsBtn: document.getElementById("settingsBtn"),
+      settingsBtnTop: document.getElementById("settingsBtnTop"),
+      editBtn: document.getElementById("editBtn"),
+      saveBtn: document.getElementById("saveBtn"),
+      cancelBtn: document.getElementById("cancelBtn"),
+      deleteBtn: document.getElementById("deleteBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      ownerInput: document.getElementById("ownerInput"),
+      repoInput: document.getElementById("repoInput"),
+      branchInput: document.getElementById("branchInput"),
+      pathInput: document.getElementById("pathInput"),
+      tokenInput: document.getElementById("tokenInput"),
+      rememberTokenInput: document.getElementById("rememberTokenInput"),
+      saveSettingsBtn: document.getElementById("saveSettingsBtn"),
+      testBtn: document.getElementById("testBtn"),
+      backBtn: document.getElementById("backBtn"),
+      dateInput: document.getElementById("dateInput"),
+      titleInput: document.getElementById("titleInput"),
+      moodInput: document.getElementById("moodInput"),
+      tagsInput: document.getElementById("tagsInput"),
+      contentInput: document.getElementById("contentInput"),
+      toast: document.getElementById("toast")
+    };
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function escapeHtml(str = "") {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function normalizeEntries(list) {
+      return (Array.isArray(list) ? list : []).map((item, index) => ({
+        id: item.id || `entry-${Date.now()}-${index}`,
+        date: item.date || new Date().toISOString().slice(0, 10),
+        title: item.title || "未命名日记",
+        mood: item.mood || "",
+        tags: Array.isArray(item.tags) ? item.tags : String(item.tags || "").split(/[,，]/).map(t => t.trim()).filter(Boolean),
+        content: item.content || ""
+      }));
+    }
+
+    function sortedEntries() {
+      return [...entries].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    }
+
+    function getCurrentEntry() {
+      return entries.find(entry => entry.id === currentId) || null;
+    }
+
+    function dateText(date) {
+      if (!date) return "未填写日期";
+      const d = new Date(`${date}T00:00:00`);
+      if (Number.isNaN(d.getTime())) return date;
+      return d.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
+    }
+
+    function saveBackup() {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(entries, null, 2));
+    }
+
+    function loadConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(CONFIG_KEY) || "{}");
+        config = {
+          owner: saved.owner || "",
+          repo: saved.repo || "",
+          branch: saved.branch || "main",
+          path: saved.path || DEFAULT_DATA_PATH
+        };
+      } catch (err) {
+        config = { owner: "", repo: "", branch: "main", path: DEFAULT_DATA_PATH };
+      }
+      const token = localStorage.getItem(TOKEN_LOCAL_KEY) || sessionStorage.getItem(TOKEN_SESSION_KEY) || "";
+      els.ownerInput.value = config.owner;
+      els.repoInput.value = config.repo;
+      els.branchInput.value = config.branch;
+      els.pathInput.value = config.path;
+      els.tokenInput.value = token;
+      els.rememberTokenInput.checked = Boolean(localStorage.getItem(TOKEN_LOCAL_KEY));
+      renderCloudStatus();
+    }
+
+    function getToken() {
+      return els.tokenInput.value.trim() || localStorage.getItem(TOKEN_LOCAL_KEY) || sessionStorage.getItem(TOKEN_SESSION_KEY) || "";
+    }
+
+    function hasGithubConfig() {
+      return Boolean(config.owner && config.repo && config.branch && config.path);
+    }
+
+    function renderCloudStatus(type, message) {
+      const token = getToken();
+      els.cloudBadge.className = "badge";
+      if (!hasGithubConfig()) {
+        els.cloudBadge.classList.add("warning");
+        els.cloudBadge.textContent = "未配置";
+        els.cloudInfo.textContent = "先上传文件并配置仓库信息；公开浏览不需要登录。";
+        return;
+      }
+      if (type === "saving") {
+        els.cloudBadge.classList.add("warning");
+        els.cloudBadge.textContent = "保存中";
+      } else if (type === "error") {
+        els.cloudBadge.classList.add("danger");
+        els.cloudBadge.textContent = "同步异常";
+      } else if (token) {
+        els.cloudBadge.classList.add("success");
+        els.cloudBadge.textContent = "可编辑";
+      } else {
+        els.cloudBadge.classList.add("warning");
+        els.cloudBadge.textContent = "只读";
+      }
+      els.cloudInfo.textContent = message || `${config.owner}/${config.repo} · ${config.branch} · ${config.path}`;
+    }
+
+    async function loadEntriesFromRemote() {
+      const path = (config.path || DEFAULT_DATA_PATH).replace(/^\/+/, "");
+      const url = `${path}?t=${Date.now()}`;
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`读取失败：${res.status}`);
+        const data = await res.json();
+        entries = normalizeEntries(data);
+        remoteSha = null;
+        currentId = sortedEntries()[0]?.id || null;
+        saveBackup();
+        renderAll();
+        renderCloudStatus(null, `已读取 ${path}。${hasGithubConfig() ? `${config.owner}/${config.repo}` : "还未填写 GitHub 设置。"}`);
+      } catch (err) {
+        const backup = localStorage.getItem(BACKUP_KEY);
+        if (backup) {
+          try {
+            entries = normalizeEntries(JSON.parse(backup));
+            currentId = sortedEntries()[0]?.id || null;
+            renderAll();
+            renderCloudStatus("error", "云端数据暂时读取失败，已显示本机备份。部署后请确认 data/entries.json 存在。 ");
+            return;
+          } catch (_) {}
+        }
+        entries = normalizeEntries(sampleEntries);
+        currentId = sortedEntries()[0]?.id || null;
+        renderAll();
+        renderCloudStatus("error", "未读取到 data/entries.json，已显示示例数据。 ");
+      }
+    }
+
+    function renderList() {
+      const keyword = els.search.value.trim().toLowerCase();
+      const filtered = sortedEntries().filter(entry => {
+        const text = [entry.date, entry.title, entry.mood, entry.tags.join(" "), entry.content].join(" ").toLowerCase();
+        return text.includes(keyword);
+      });
+
+      els.list.innerHTML = "";
+      filtered.forEach(entry => {
+        const button = document.createElement("button");
+        button.className = `entry-item${entry.id === currentId ? " active" : ""}`;
+        button.innerHTML = `
+          <span class="entry-date">${escapeHtml(entry.date)}</span>
+          <span class="entry-title">${escapeHtml(entry.title)}</span>
+          <span class="entry-preview">${escapeHtml(entry.content || "没有正文")}</span>
+        `;
+        button.addEventListener("click", () => {
+          currentId = entry.id;
+          showViewer();
+          renderAll(false);
+        });
+        els.list.appendChild(button);
+      });
+
+      els.status.textContent = entries.length
+        ? `共 ${entries.length} 篇日记。${hasGithubConfig() ? "数据源：GitHub 仓库。" : "当前尚未绑定 GitHub 仓库。"}`
+        : "暂无日记。";
+    }
+
+    function renderViewer() {
+      const entry = getCurrentEntry();
+      const hasEntry = Boolean(entry);
+      els.empty.hidden = hasEntry;
+      if (!hasEntry) {
+        els.viewer.hidden = true;
+        return;
+      }
+      els.viewer.hidden = false;
+      els.viewDate.textContent = dateText(entry.date);
+      els.viewTitle.textContent = entry.title;
+      const tags = entry.tags.map(tag => `<span class="tag"># ${escapeHtml(tag)}</span>`).join("");
+      els.viewMeta.innerHTML = `${entry.mood ? `<span class="tag">心情：${escapeHtml(entry.mood)}</span>` : ""}${tags}`;
+      els.viewContent.innerHTML = escapeHtml(entry.content || "今天还没有写下内容。");
+    }
+
+    function renderAll(closePanels = true) {
+      renderList();
+      renderViewer();
+      if (closePanels) showViewer();
+    }
+
+    function showViewer() {
+      els.editor.classList.remove("active");
+      els.settings.classList.remove("active");
+      els.viewer.classList.remove("hidden");
+      if (!getCurrentEntry()) els.viewer.hidden = true;
+    }
+
+    function showSettings() {
+      els.viewer.classList.add("hidden");
+      els.editor.classList.remove("active");
+      els.settings.classList.add("active");
+    }
+
+    function openEditor() {
+      const entry = getCurrentEntry();
+      if (!entry) return;
+      if (!hasGithubConfig() || !getToken()) {
+        showToast("先配置 GitHub 仓库和 Token");
+        showSettings();
+        return;
+      }
+      els.viewer.classList.add("hidden");
+      els.settings.classList.remove("active");
+      els.editor.classList.add("active");
+      els.dateInput.value = entry.date;
+      els.titleInput.value = entry.title;
+      els.moodInput.value = entry.mood;
+      els.tagsInput.value = entry.tags.join("，");
+      els.contentInput.value = entry.content;
+    }
+
+    function createEntry() {
+      if (!hasGithubConfig() || !getToken()) {
+        showToast("先配置 GitHub 仓库和 Token");
+        showSettings();
+        return;
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const entry = {
+        id: `entry-${today}-${Date.now()}`,
+        date: today,
+        title: "新日记",
+        mood: "",
+        tags: [],
+        content: ""
+      };
+      entries.unshift(entry);
+      currentId = entry.id;
+      saveBackup();
+      renderList();
+      renderViewer();
+      openEditor();
+    }
+
+    function applyEditorToCurrent() {
+      const entry = getCurrentEntry();
+      if (!entry) return null;
+      entry.date = els.dateInput.value || new Date().toISOString().slice(0, 10);
+      entry.title = els.titleInput.value.trim() || "未命名日记";
+      entry.mood = els.moodInput.value.trim();
+      entry.tags = els.tagsInput.value.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+      entry.content = els.contentInput.value;
+      saveBackup();
+      return entry;
+    }
+
+    function githubApiPath(path) {
+      return path.split("/").map(encodeURIComponent).join("/");
+    }
+
+    function githubHeaders(token) {
+      return {
+        "Accept": "application/vnd.github+json",
+        "Authorization": `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28"
+      };
+    }
+
+    function toBase64Utf8(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode(...chunk);
+      }
+      return btoa(binary);
+    }
+
+    async function getGithubFile(token) {
+      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(config.path)}?ref=${encodeURIComponent(config.branch)}`;
+      const res = await fetch(url, { headers: githubHeaders(token) });
+      if (res.status === 404) return null;
+      if (!res.ok) {
+        const detail = await safeJson(res);
+        throw new Error(detail.message || `GitHub 读取失败：${res.status}`);
+      }
+      return await res.json();
+    }
+
+    async function putGithubFile(token, sha) {
+      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(config.path)}`;
+      const content = JSON.stringify(sortedEntries(), null, 2) + "\n";
+      const body = {
+        message: `Update diary entries ${new Date().toISOString().slice(0, 19).replace("T", " ")}`,
+        content: toBase64Utf8(content),
+        branch: config.branch
+      };
+      if (sha) body.sha = sha;
+
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { ...githubHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const detail = await safeJson(res);
+        throw new Error(detail.message || `GitHub 保存失败：${res.status}`);
+      }
+      return await res.json();
+    }
+
+    async function safeJson(res) {
+      try { return await res.json(); } catch (_) { return {}; }
+    }
+
+    async function saveEntriesToGithub() {
+      if (isSaving) return;
+      if (!hasGithubConfig() || !getToken()) {
+        showToast("先配置 GitHub 仓库和 Token");
+        showSettings();
+        return;
+      }
+      isSaving = true;
+      els.saveBtn.disabled = true;
+      renderCloudStatus("saving", "正在提交到 GitHub……");
+      try {
+        const token = getToken();
+        const file = await getGithubFile(token);
+        const result = await putGithubFile(token, file?.sha || remoteSha || null);
+        remoteSha = result.content?.sha || null;
+        renderAll();
+        renderCloudStatus(null, "已保存到 GitHub。GitHub Pages 页面可能需要稍等片刻刷新。 ");
+        showToast("已保存到 GitHub");
+      } catch (err) {
+        console.error(err);
+        renderCloudStatus("error", err.message || "保存失败，请检查 Token 和仓库权限。 ");
+        alert(`保存失败：${err.message || err}`);
+      } finally {
+        isSaving = false;
+        els.saveBtn.disabled = false;
+      }
+    }
+
+    async function saveCurrentEntryToGithub() {
+      applyEditorToCurrent();
+      await saveEntriesToGithub();
+    }
+
+    async function deleteCurrentEntry() {
+      const entry = getCurrentEntry();
+      if (!entry) return;
+      if (!confirm(`确定删除《${entry.title}》吗？删除后需要保存到 GitHub 才会同步。`)) return;
+      entries = entries.filter(item => item.id !== entry.id);
+      currentId = sortedEntries()[0]?.id || null;
+      saveBackup();
+      renderList();
+      renderViewer();
+      if (hasGithubConfig() && getToken()) {
+        await saveEntriesToGithub();
+      } else {
+        showToast("已本机删除，请配置后保存到 GitHub");
+      }
+    }
+
+    function saveSettings() {
+      config = {
+        owner: els.ownerInput.value.trim(),
+        repo: els.repoInput.value.trim(),
+        branch: els.branchInput.value.trim() || "main",
+        path: els.pathInput.value.trim().replace(/^\/+/, "") || DEFAULT_DATA_PATH
+      };
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      const token = els.tokenInput.value.trim();
+      localStorage.removeItem(TOKEN_LOCAL_KEY);
+      sessionStorage.removeItem(TOKEN_SESSION_KEY);
+      if (token) {
+        if (els.rememberTokenInput.checked) localStorage.setItem(TOKEN_LOCAL_KEY, token);
+        else sessionStorage.setItem(TOKEN_SESSION_KEY, token);
+      }
+      renderCloudStatus();
+      showToast("设置已保存");
+    }
+
+    async function testConnection() {
+      saveSettings();
+      if (!hasGithubConfig() || !getToken()) {
+        showToast("请先填写完整设置和 Token");
+        return;
+      }
+      renderCloudStatus("saving", "正在测试 GitHub 连接……");
+      try {
+        const file = await getGithubFile(getToken());
+        remoteSha = file?.sha || null;
+        renderCloudStatus(null, file ? "连接成功，已找到数据文件。" : "连接成功，但数据文件不存在，第一次保存时会创建。 ");
+        showToast("GitHub 连接成功");
+      } catch (err) {
+        renderCloudStatus("error", err.message || "连接失败");
+        alert(`连接失败：${err.message || err}`);
+      }
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(sortedEntries(), null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "entries-backup.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("已导出备份");
+    }
+
+    els.search.addEventListener("input", renderList);
+    els.newBtn.addEventListener("click", createEntry);
+    els.refreshBtn.addEventListener("click", loadEntriesFromRemote);
+    els.settingsBtn.addEventListener("click", showSettings);
+    els.settingsBtnTop.addEventListener("click", showSettings);
+    els.editBtn.addEventListener("click", openEditor);
+    els.saveBtn.addEventListener("click", saveCurrentEntryToGithub);
+    els.cancelBtn.addEventListener("click", renderAll);
+    els.deleteBtn.addEventListener("click", deleteCurrentEntry);
+    els.exportBtn.addEventListener("click", exportData);
+    els.saveSettingsBtn.addEventListener("click", saveSettings);
+    els.testBtn.addEventListener("click", testConnection);
+    els.backBtn.addEventListener("click", renderAll);
+
+    loadConfig();
+    loadEntriesFromRemote();
+  </script>
+</body>
+</html>
