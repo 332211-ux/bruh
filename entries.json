@@ -5,7 +5,7 @@
     "title": "第一篇日记",
     "mood": "平静",
     "tags": ["示例", "开始"],
-    "content": "这是一个示例页面。\n\n这个版本支持 GitHub 在线同步：网页公开展示，编辑时通过你的 GitHub Token 把内容保存到仓库里的 data/entries.json。\n\n别人打开网站时，会读取这个 JSON 文件，所以刷新后可以看到你更新后的内容。"
+    "content": "这是一个示例页面。"
   },
   {
     "id": "entry-2026-06-23",
