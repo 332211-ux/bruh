@@ -540,7 +540,7 @@
           <div id="cloudInfo">公开浏览不需要登录；编辑保存需要你的 GitHub Token。</div>
         </div>
 
-        <div class="section-head"><span>按时间</span><span>最新在前</span></div>
+        <div class="section-head"><span>按日期</span><span>最旧在前</span></div>
         <div id="entryList" class="entry-list" aria-label="日记目录"></div>
         <p class="status" id="statusText"></p>
       </aside>
@@ -677,7 +677,7 @@
         </section>
 
         <section class="widget">
-          <div class="widget-head"><h3 class="widget-title">最近更新</h3><span class="mini-muted">最新</span></div>
+          <div class="widget-head"><h3 class="widget-title">日期顺序</h3><span class="mini-muted">最旧</span></div>
           <div id="recentList" class="recent-list"></div>
         </section>
       </aside>
@@ -838,7 +838,7 @@
     function sortedEntries(includeDeleted = false) {
       return [...entries]
         .filter(entry => includeDeleted || !entry.deleted)
-        .sort((a, b) => (b.date || "").localeCompare(a.date || "") || String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+        .sort((a, b) => (a.date || "").localeCompare(b.date || "") || String(a.updatedAt || "").localeCompare(String(b.updatedAt || "")));
     }
 
     function nonDeletedEntries() {
@@ -1167,7 +1167,7 @@
       if (view !== "date" && !("date" in options)) selectedDate = null;
       if (view !== "tag" && !("tag" in options)) selectedTag = null;
 
-      const visible = getEntriesForActiveView().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      const visible = getEntriesForActiveView().sort((a, b) => (a.date || "").localeCompare(b.date || "") || String(a.updatedAt || "").localeCompare(String(b.updatedAt || "")));
       if (!visible.some(entry => entry.id === currentId)) currentId = visible[0]?.id || null;
       renderAll(false);
       if (isMobileView()) {
@@ -1188,7 +1188,7 @@
     function renderList() {
       renderNav();
       const keyword = els.search.value.trim().toLowerCase();
-      const allVisibleForView = getEntriesForActiveView().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      const allVisibleForView = getEntriesForActiveView().sort((a, b) => (a.date || "").localeCompare(b.date || "") || String(a.updatedAt || "").localeCompare(String(b.updatedAt || "")));
 
       els.list.innerHTML = "";
 
@@ -1411,7 +1411,7 @@
       selectedDate = date;
       activeView = "date";
       selectedTag = null;
-      const entry = nonDeletedEntries().filter(item => item.date === date).sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))[0];
+      const entry = nonDeletedEntries().filter(item => item.date === date).sort((a, b) => String(a.updatedAt || "").localeCompare(String(b.updatedAt || "")))[0];
       currentId = entry?.id || null;
       renderAll(false);
       showViewer();
