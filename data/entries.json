@@ -38,5 +38,17 @@
     "deleted": false,
     "createdAt": "2026-06-25T00:58:40.610Z",
     "updatedAt": "2026-06-25T07:25:59.400Z"
+  },
+  {
+    "id": "entry-2026-06-25-1782374364258",
+    "date": "2026-06-25",
+    "title": "新日记",
+    "mood": "",
+    "tags": [],
+    "content": "",
+    "favorite": false,
+    "deleted": true,
+    "createdAt": "2026-06-25T07:59:24.258Z",
+    "updatedAt": "2026-06-25T08:01:21.170Z"
   }
 ]
