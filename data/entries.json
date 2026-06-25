@@ -78,5 +78,19 @@
     "deleted": false,
     "createdAt": "2026-06-25T08:18:54.022Z",
     "updatedAt": "2026-06-25T08:39:39.881Z"
+  },
+  {
+    "id": "entry-2026-06-25-1782376786823",
+    "date": "2026-06-25",
+    "title": "关于恐惧",
+    "mood": "平静",
+    "tags": [
+      "正在思考"
+    ],
+    "content": "ASK：他可能会觉得，我的天啊，我都已经这么忙了，你还在闹什么，你还在作什么，你这样只能越来越让我们没可能<div><br></div><div><br></div>",
+    "favorite": false,
+    "deleted": false,
+    "createdAt": "2026-06-25T08:39:46.823Z",
+    "updatedAt": "2026-06-25T08:40:40.102Z"
   }
 ]
