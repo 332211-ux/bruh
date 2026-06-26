@@ -234,10 +234,10 @@
       "format": "normal",
       "qaPairs": [],
       "favorite": false,
-      "deleted": false,
+      "deleted": true,
       "order": 11,
       "createdAt": "2026-06-25T08:39:46.823Z",
-      "updatedAt": "2026-06-25T08:43:15.822Z"
+      "updatedAt": "2026-06-26T09:05:30.120Z"
     },
     {
       "id": "entry-2026-06-25-1782390813829",
