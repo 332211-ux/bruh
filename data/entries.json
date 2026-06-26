@@ -4,12 +4,16 @@
     "content": "所有“关于……”是g老师针对不同主题的回答\n所有难过的事情都在“在这里难过”这一篇\n剩下的都是在随便说话",
     "updatedAt": "2026-06-26T00:43:15.065Z"
   },
+  "moods": {
+    "2026-06-24": "平静",
+    "2026-06-25": "哭哭",
+    "2026-06-26": "平静"
+  },
   "entries": [
     {
       "id": "entry-2026-06-24-1782299590176",
       "date": "2026-06-24",
       "title": "关于规则",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -35,6 +39,7 @@
       ],
       "favorite": false,
       "deleted": false,
+      "order": 1,
       "createdAt": "2026-06-24T11:13:10.176Z",
       "updatedAt": "2026-06-26T02:03:51.009Z"
     },
@@ -42,7 +47,6 @@
       "id": "entry-2026-06-25-1782349120610",
       "date": "2026-06-25",
       "title": "关于打击",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -51,6 +55,7 @@
       "qaPairs": [],
       "favorite": false,
       "deleted": true,
+      "order": 2,
       "createdAt": "2026-06-25T00:58:40.610Z",
       "updatedAt": "2026-06-25T13:06:50.734Z"
     },
@@ -58,13 +63,13 @@
       "id": "entry-2026-06-25-1782374364258",
       "date": "2026-06-25",
       "title": "新日记",
-      "mood": "",
       "tags": [],
       "content": "",
       "format": "normal",
       "qaPairs": [],
       "favorite": false,
       "deleted": true,
+      "order": 3,
       "createdAt": "2026-06-25T07:59:24.258Z",
       "updatedAt": "2026-06-25T08:01:21.170Z"
     },
@@ -72,7 +77,6 @@
       "id": "entry-2026-06-25-1782374850301",
       "date": "2026-06-25",
       "title": "关于“改变”",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -81,6 +85,7 @@
       "qaPairs": [],
       "favorite": false,
       "deleted": false,
+      "order": 4,
       "createdAt": "2026-06-25T08:07:30.301Z",
       "updatedAt": "2026-06-25T13:36:32.645Z"
     },
@@ -88,7 +93,6 @@
       "id": "entry-2026-06-25-1782375534022",
       "date": "2026-06-25",
       "title": "关于“要求不分手”",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -97,6 +101,7 @@
       "qaPairs": [],
       "favorite": false,
       "deleted": true,
+      "order": 5,
       "createdAt": "2026-06-25T08:18:54.022Z",
       "updatedAt": "2026-06-25T09:22:29.010Z"
     },
@@ -104,7 +109,6 @@
       "id": "entry-2026-06-25-1782376786823",
       "date": "2026-06-25",
       "title": "关于恐惧",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -113,6 +117,7 @@
       "qaPairs": [],
       "favorite": false,
       "deleted": false,
+      "order": 6,
       "createdAt": "2026-06-25T08:39:46.823Z",
       "updatedAt": "2026-06-25T08:43:15.822Z"
     },
@@ -120,13 +125,13 @@
       "id": "entry-2026-06-25-1782379150057",
       "date": "2026-06-25",
       "title": "新日记",
-      "mood": "",
       "tags": [],
       "content": "",
       "format": "normal",
       "qaPairs": [],
       "favorite": false,
       "deleted": true,
+      "order": 7,
       "createdAt": "2026-06-25T09:19:10.057Z",
       "updatedAt": "2026-06-25T09:20:48.790Z"
     },
@@ -134,7 +139,6 @@
       "id": "entry-2026-06-25-1782379415170",
       "date": "2026-06-25",
       "title": "关于“贪婪”",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -148,6 +152,7 @@
       ],
       "favorite": false,
       "deleted": false,
+      "order": 8,
       "createdAt": "2026-06-25T09:23:35.170Z",
       "updatedAt": "2026-06-26T02:06:37.646Z"
     },
@@ -155,7 +160,6 @@
       "id": "entry-2026-06-25-1782390813829",
       "date": "2026-06-25",
       "title": "在这里难过",
-      "mood": "哭哭",
       "tags": [
         "正在难过"
       ],
@@ -164,6 +168,7 @@
       "qaPairs": [],
       "favorite": false,
       "deleted": false,
+      "order": 9,
       "createdAt": "2026-06-25T12:33:33.829Z",
       "updatedAt": "2026-06-25T15:56:54.876Z"
     },
@@ -171,7 +176,6 @@
       "id": "entry-2026-06-25-1782390916656",
       "date": "2026-06-25",
       "title": "在这里开心",
-      "mood": "开心",
       "tags": [
         "正在开心"
       ],
@@ -180,6 +184,7 @@
       "qaPairs": [],
       "favorite": false,
       "deleted": true,
+      "order": 10,
       "createdAt": "2026-06-25T12:35:16.658Z",
       "updatedAt": "2026-06-26T00:45:26.967Z"
     },
@@ -187,7 +192,6 @@
       "id": "entry-2026-06-26-1782440827419",
       "date": "2026-06-26",
       "title": "关于“生命力”",
-      "mood": "平静",
       "tags": [
         "正在思考"
       ],
@@ -201,6 +205,7 @@
       ],
       "favorite": false,
       "deleted": false,
+      "order": 11,
       "createdAt": "2026-06-26T02:27:07.419Z",
       "updatedAt": "2026-06-26T02:27:57.381Z"
     }
