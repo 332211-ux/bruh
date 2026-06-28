@@ -639,27 +639,58 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   .calendar-grid { gap: 4px; }
 }
 
+
+/* Mobile drawer visibility patch: make the function panel use the full viewport, including iOS Safari. */
+@media (max-width: 900px) {
+  .right-rail {
+    position: fixed !important;
+    inset: 0 0 0 auto !important;
+    width: min(92vw, 420px) !important;
+    max-width: calc(100vw - 12px) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: max(14px, env(safe-area-inset-top)) 12px max(18px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    z-index: 120 !important;
+    transform: translate3d(112%, 0, 0) !important;
+  }
+  body.mobile-tools-open .right-rail { transform: translate3d(0, 0, 0) !important; }
+  .mobile-overlay { z-index: 110 !important; }
+  .thought-thread-card { order: 2; }
+  .announcement-card { order: 3; }
+  .section-head { order: 4; }
+  .entry-list { order: 5; }
+  .status { order: 6; }
+}
+
   </style>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">✎</div>
+        <div class="brand-mark">记</div>
         <div>
           <h1>我的日记</h1>
         </div>
       </div>
       <div class="mobile-header-actions mobile-only">
         <button id="mobileBackBtn" type="button">← 目录</button>
-        <button id="mobileToolsBtn" type="button">☰ 功能</button>
+        <button id="mobileToolsBtn" type="button">功能</button>
       </div>
       <div class="global-search">
         <input id="searchInput" placeholder="搜索日记、问题或标签" />
       </div>
       <div class="top-actions">
-        <span id="cloudTopInfo" class="sync-chip">☁️ 等待同步状态</span>
-        <button class="icon-btn ghost" id="settingsBtnTop" title="同步设置">⚙️</button>
+        <span id="cloudTopInfo" class="sync-chip">等待同步状态</span>
+        <button class="icon-btn ghost" id="settingsBtnTop" title="同步设置">设置</button>
       </div>
     </header>
 
@@ -667,39 +698,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       <aside class="sidebar">
         <nav class="nav-list directory-total-nav" aria-label="目录总览">
           <div class="nav-item directory-total-button" data-nav-view="directory" role="button" tabindex="0">
-            <b>📖 目录</b>
+            <b>目录</b>
             <span class="count" data-mobile-count="total">0</span>
           </div>
         </nav>
 
-        <section class="thought-overview-card" aria-label="思考总览">
-          <div class="thought-overview-head">
-            <b>🧭 思考总览</b>
-            <button id="editThinkingBtn" type="button">编辑</button>
-          </div>
-          <div class="thought-hero">
-            <span class="label">当前我在想什么</span>
-            <div id="thinkingThemeView" class="value thought-empty">暂未填写当前主题。</div>
-          </div>
-          <div class="thought-kv-list">
-            <div class="thought-kv">
-              <span class="label">核心问题</span>
-              <div id="thinkingCoreView" class="value thought-empty">暂未填写。</div>
-            </div>
-            <div class="thought-kv">
-              <span class="label">阶段性结论</span>
-              <div id="thinkingConclusionView" class="value thought-empty">暂未填写。</div>
-            </div>
-            <div class="thought-kv">
-              <span class="label">还没想明白</span>
-              <div id="thinkingOpenView" class="value thought-empty">暂未填写。</div>
-            </div>
-          </div>
-        </section>
-
         <section class="thought-thread-card" aria-label="思考脉络">
           <div class="thought-thread-head">
-            <b>🧩 思考脉络</b>
+            <b>思考脉络</b>
             <span class="mini-muted">来自问答记录</span>
           </div>
           <div id="thoughtThreadList" class="thought-thread-list"></div>
@@ -707,7 +713,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
         <section class="announcement-card" aria-label="公告栏">
           <div class="announcement-head">
-            <b id="announcementTitleView">📌 公告栏</b>
+            <b id="announcementTitleView">公告栏</b>
             <button id="editAnnouncementBtn" type="button">编辑</button>
           </div>
           <div id="announcementContentView" class="announcement-content empty">暂无公告。</div>
@@ -715,12 +721,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         </section>
 
         <div class="side-actions">
-          <button class="primary" id="newBtn">✍️ 新增日记</button>
+          <button class="primary" id="newBtn">新增日记</button>
           <button id="trashBtn" type="button">回收站</button>
           <button id="refreshBtn">刷新</button>
           <button id="settingsBtn">设置</button>
           <button id="exportBtn">备份</button>
-          <button id="mobileToolsBtnSide" class="mobile-only mobile-tools-entry" type="button">☰ 打开日历 / 统计</button>
+          <button id="mobileToolsBtnSide" class="mobile-only mobile-tools-entry" type="button">打开日历 / 统计</button>
         </div>
 
         <div class="cloud-card">
@@ -744,12 +750,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
               <h2 id="viewTitle" class="view-title">请选择一篇日记</h2>
             </div>
             <div class="entry-actions">
-              <button id="editBtn">✏️ 编辑</button>
-              <button id="favoriteBtn">☆ 收藏</button>
+              <button id="editBtn">编辑</button>
+              <button id="favoriteBtn">收藏</button>
               <button id="restoreBtn" hidden>↩ 恢复</button>
               <button class="danger" id="permanentDeleteBtn" hidden>彻底删除</button>
-              <button class="primary" id="quickNewBtn">＋ 新增</button>
-              <button id="exportBtnTop">⇧ 导出</button>
+              <button class="primary" id="quickNewBtn">新增</button>
+              <button id="exportBtnTop">导出</button>
             </div>
           </div>
           <div id="viewMeta" class="meta"></div>
@@ -765,18 +771,18 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           <div>
             <b id="emptyTitle">还没有日记</b>
             <p id="emptyDesc">点击左侧“新增日记”，开始写第一篇。</p>
-            <button class="primary" id="emptyNewBtn" type="button">＋ 新增第一篇日记</button>
+            <button class="primary" id="emptyNewBtn" type="button">新增第一篇日记</button>
           </div>
         </section>
 
         <section id="editor" class="editor" aria-label="日记编辑器">
           <div class="topline">
             <div>
-              <div class="date-pill">✍️ 编辑模式</div>
+              <div class="date-pill">编辑模式</div>
               <h2 class="view-title">修改这一天</h2>
             </div>
             <div class="entry-actions">
-              <button class="success" id="saveBtn">✓ 保存到 GitHub</button>
+              <button class="success" id="saveBtn">保存到 GitHub</button>
               <button id="cancelBtn">取消</button>
               <button class="danger" id="deleteBtn">删除</button>
             </div>
@@ -804,7 +810,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
                 <div class="format-tools" aria-label="正文格式工具栏">
                   <button id="boldBtn" class="format-btn" type="button" title="加粗 Ctrl/⌘ + B"><b>B</b> 加粗</button>
                   <button id="italicBtn" class="format-btn" type="button" title="斜体 Ctrl/⌘ + I"><i>I</i> 斜体</button>
-                  <button id="insertImageBtn" type="button">🖼️ 插入图片</button>
+                  <button id="insertImageBtn" type="button">插入图片</button>
                 </div>
                 <span class="hint">选中文字后点“加粗/斜体”，也可以使用 Ctrl/⌘ + B / I；正文里可直接粘贴截图或图片。</span>
               </div>
@@ -823,9 +829,9 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
               </div>
               <div id="qaList" class="qa-list" aria-label="问答内容列表"></div>
               <div class="qa-add-actions">
-                <button id="addQaPairBtn" type="button">＋ 增加一组问答</button>
-                <button id="addQuestionBoxBtn" type="button">＋ 增加问题框</button>
-                <button id="addAnswerBoxBtn" type="button">＋ 增加答案框</button>
+                <button id="addQaPairBtn" type="button">增加一组问答</button>
+                <button id="addQuestionBoxBtn" type="button">增加问题框</button>
+                <button id="addAnswerBoxBtn" type="button">增加答案框</button>
               </div>
               <p class="small-note">问答模式会按“我问的问题 / 回答的答案”分块展示，可以只填问题，也可以只填答案。</p>
             </div>
@@ -836,7 +842,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         <section id="settingsPanel" class="settings-panel" aria-label="GitHub 同步设置">
           <div class="topline">
             <div>
-              <div class="date-pill">☁️ GitHub 设置</div>
+              <div class="date-pill">GitHub 设置</div>
               <h2 class="view-title">连接你的仓库</h2>
             </div>
             <div class="settings-actions">
@@ -873,10 +879,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         </div>
         <div class="mobile-drawer-controls mobile-only" aria-label="手机端功能导航">
           <nav class="mobile-drawer-nav" aria-label="手机端日记导航">
-            <div class="nav-item" data-nav-view="trash" role="button" tabindex="0"><b>🗑️ 回收站</b><span class="count" data-mobile-count="trash">0</span></div>
+            <div class="nav-item" data-nav-view="trash" role="button" tabindex="0"><b>回收站</b><span class="count" data-mobile-count="trash">0</span></div>
           </nav>
           <div class="mobile-drawer-actions">
-            <button class="primary" id="mobileNewBtn" type="button">✍️ 新增日记</button>
+            <button class="primary" id="mobileNewBtn" type="button">新增日记</button>
             <button id="mobileRefreshBtn" type="button">刷新</button>
             <button id="mobileSettingsBtn" type="button">设置</button>
             <button id="mobileExportBtn" type="button">备份</button>
@@ -893,7 +899,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         <section class="widget">
           <div class="widget-head">
             <h3 class="widget-title">统计</h3>
-            <span class="badge">✎</span>
+            <span class="badge">状态</span>
           </div>
           <div class="stat-grid">
             <div class="stat-box"><div id="todayWords" class="stat-value">0</div><div class="mini-muted">当前字数</div></div>
@@ -930,24 +936,6 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     </section>
   </div>
 
-  <div id="thinkingModal" class="modal-overlay" hidden>
-    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="thinkingModalTitle">
-      <div class="modal-head">
-        <h2 id="thinkingModalTitle">编辑思考总览</h2>
-        <button id="cancelThinkingBtn" class="icon-btn" type="button" aria-label="关闭思考总览编辑">×</button>
-      </div>
-      <div class="modal-body thinking-modal-grid">
-        <label><span>当前我在想什么</span><textarea id="thinkingThemeInput" placeholder="例如：我正在整理关系里的责任、边界和自我解释。"></textarea></label>
-        <label><span>核心问题</span><textarea id="thinkingCoreInput" placeholder="例如：为什么我总是想把事情解释清楚？"></textarea></label>
-        <label><span>阶段性结论</span><textarea id="thinkingConclusionInput" placeholder="例如：我真正想要的可能不是解释成功，而是确认自己没有被误解。"></textarea></label>
-        <label><span>还没想明白</span><textarea id="thinkingOpenInput" placeholder="例如：如何在不放弃表达的情况下，减少过度解释？"></textarea></label>
-      </div>
-      <div class="modal-actions">
-        <button id="cancelThinkingBtn2" type="button">取消</button>
-        <button id="saveThinkingBtn" class="primary" type="button">保存思考总览</button>
-      </div>
-    </section>
-  </div>
 
 
   <div id="moodModal" class="modal-overlay" hidden>
@@ -1943,12 +1931,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (!hasGithubConfig()) {
         els.cloudBadge.classList.add("warning");
         els.cloudBadge.textContent = "未配置";
-        label = "☁️ 未配置同步";
+        label = "未配置同步";
         els.cloudInfo.textContent = "先上传文件并配置仓库信息；公开浏览不需要登录。";
       } else if (type === "saving") {
         els.cloudBadge.classList.add("warning");
         els.cloudBadge.textContent = "保存中";
-        label = "☁️ 正在同步";
+        label = "正在同步";
         els.cloudInfo.textContent = message || "正在提交到 GitHub……";
       } else if (type === "error") {
         els.cloudBadge.classList.add("danger");
@@ -1958,7 +1946,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       } else if (token) {
         els.cloudBadge.classList.add("success");
         els.cloudBadge.textContent = "可编辑";
-        label = "☁️ 已连接，可编辑";
+        label = "已连接，可编辑";
         els.cloudInfo.textContent = message || `${config.owner}/${config.repo} · ${config.branch} · ${config.path}`;
       } else {
         els.cloudBadge.classList.add("warning");
@@ -2033,7 +2021,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     function renderAnnouncement() {
       const safe = normalizeAnnouncement(announcement);
       announcement = safe;
-      if (els.announcementTitleView) els.announcementTitleView.textContent = `📌 ${safe.title || "公告栏"}`;
+      if (els.announcementTitleView) els.announcementTitleView.textContent = `${safe.title || "公告栏"}`;
       if (els.announcementContentView) {
         const text = String(safe.content || "").trim();
         els.announcementContentView.textContent = text || "暂无公告。";
@@ -2171,8 +2159,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (hasGithubConfig() && getToken()) {
         await saveEntriesToGithub();
       } else {
-        renderCloudStatus(null, "思考总览已保存到本机；配置 GitHub 后再次保存可同步到线上。");
-        showToast("思考总览已保存到本机，尚未同步到线上");
+        renderCloudStatus(null, "已保存到本机；配置 GitHub 后再次保存可同步到线上。");
+        showToast("已保存到本机，尚未同步到线上");
       }
     }
 
@@ -2228,8 +2216,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           item.setAttribute("tabindex", "0");
           const showMove = sortMode && activeView !== "trash" && !keyword;
           const headerLine = isQaEntry(entry)
-            ? `<span class="entry-date entry-format-badge">${entry.favorite ? "⭐ " : ""}${entry.deleted ? "🗑️ " : ""}💬 问答记录</span>`
-            : `<span class="entry-date">${entry.favorite ? "⭐ " : ""}${entry.deleted ? "🗑️ " : ""}${escapeHtml(shortDateText(entry.date))}</span>`;
+            ? `<span class="entry-date entry-format-badge">${entry.favorite ? "收藏 · " : ""}${entry.deleted ? "回收站 · " : ""}问答记录</span>`
+            : `<span class="entry-date">${entry.favorite ? "收藏 · " : ""}${entry.deleted ? "回收站 · " : ""}${escapeHtml(shortDateText(entry.date))}</span>`;
           item.innerHTML = `
             ${headerLine}
             <span class="entry-title">${escapeHtml(entry.title)}</span>
@@ -2302,23 +2290,23 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     function updateEmptyState() {
       let title = "还没有日记";
       let desc = "点击左侧“新增日记”，开始写第一篇。";
-      let buttonText = "＋ 新增第一篇日记";
+      let buttonText = "新增第一篇日记";
       if (activeView === "favorites") {
         title = "还没有收藏";
         desc = "打开一篇日记后点击“收藏”，它会出现在这里。";
-        buttonText = "＋ 新增日记";
+        buttonText = "新增日记";
       } else if (activeView === "trash") {
         title = "回收站是空的";
         desc = "删除的日记会先移到这里，可恢复或彻底删除。";
-        buttonText = "＋ 新增日记";
+        buttonText = "新增日记";
       } else if (activeView === "date" && selectedDate) {
         title = "这一天还没有日记";
         desc = `${selectedDate} 暂无内容，可以直接新建这一天的日记。`;
-        buttonText = "＋ 新增这一天的日记";
+        buttonText = "新增这一天的日记";
       } else if (activeView === "tag" && selectedTag) {
         title = `#${selectedTag}`;
         desc = "这个标签下暂时没有日记。";
-        buttonText = "＋ 新增日记";
+        buttonText = "新增日记";
       }
       if (els.emptyTitle) els.emptyTitle.textContent = title;
       if (els.emptyDesc) els.emptyDesc.textContent = desc;
@@ -2336,7 +2324,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       }
       els.viewer.classList.remove("hidden");
       const qaEntry = isQaEntry(entry);
-      els.viewDate.textContent = qaEntry ? `${entry.deleted ? "🗑️ " : "💬 "}问答记录` : `${entry.deleted ? "🗑️ " : "📅 "}${dateText(entry.date)}`;
+      els.viewDate.textContent = qaEntry ? `${entry.deleted ? "回收站 · " : ""}问答记录` : `${entry.deleted ? "回收站 · " : ""}${dateText(entry.date)}`;
       els.viewTitle.textContent = entry.title;
       const tags = entry.tags.map(tag => `<span class="tag"># ${escapeHtml(tag)}</span>`).join("");
       els.viewMeta.innerHTML = `${entry.favorite ? `<span class="tag">已收藏</span>` : ""}${entry.deleted ? `<span class="tag">回收站</span>` : ""}${tags}`;
@@ -2347,7 +2335,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       els.entryFooterRight.textContent = `共 ${words} 字 · ${Math.max(1, Math.ceil(words / 500))} 分钟阅读`;
       if (els.favoriteBtn) {
         els.favoriteBtn.hidden = Boolean(entry.deleted);
-        els.favoriteBtn.textContent = entry.favorite ? "★ 已收藏" : "☆ 收藏";
+        els.favoriteBtn.textContent = entry.favorite ? "★ 已收藏" : "收藏";
       }
       if (els.restoreBtn) els.restoreBtn.hidden = !entry.deleted;
       if (els.permanentDeleteBtn) els.permanentDeleteBtn.hidden = !entry.deleted;
@@ -2568,7 +2556,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       els.deleteBtn.textContent = "移到回收站";
 
       const canSync = hasGithubConfig() && Boolean(getToken());
-      els.saveBtn.textContent = canSync ? "✓ 保存到 GitHub" : "✓ 保存本机草稿";
+      els.saveBtn.textContent = canSync ? "保存到 GitHub" : "✓ 保存本机草稿";
       els.editorNotice.className = canSync ? "editor-notice ok" : "editor-notice";
       els.editorNotice.innerHTML = canSync
         ? `已连接 GitHub。点击保存会更新 <code>${escapeHtml(config.path)}</code>，别人刷新公开页面后即可看到。`
