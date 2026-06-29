@@ -268,6 +268,37 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 .thought-index { width: 34px; height: 34px; display:grid; place-items:center; border-radius: 13px; color:#fff; font-size: 12px; font-weight: 900; background: linear-gradient(135deg,var(--blue),var(--violet)); box-shadow: 0 10px 18px rgba(37,99,235,.22); }
 .thought-thread-question { font-weight: 850; line-height: 1.55; color: var(--ink); }
 .thought-thread-source, .thought-thread-copy { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+.qa-directory-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(37,99,235,.12);
+  background: rgba(37,99,235,.07);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 950;
+  box-shadow: none;
+}
+.qa-directory-link:hover, .qa-directory-link.active {
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  color: #fff;
+  border-color: transparent;
+}
+.qa-directory-link span:last-child {
+  min-width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  color: var(--blue);
+  font-size: 11px;
+}
+.qa-directory-link.active span:last-child, .qa-directory-link:hover span:last-child { color: var(--blue); background: #fff; }
 .announcement-content { margin-top: 10px; color: var(--ink-soft); line-height: 1.75; white-space: pre-wrap; }
 .announcement-content.empty { color: var(--muted-2); }
 .announcement-time, .mini-muted { color: var(--muted-2); font-size: 12px; font-weight: 750; }
@@ -760,7 +791,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         <section class="thought-thread-card" aria-label="思考脉络">
           <div class="thought-thread-head">
             <b>思考脉络</b>
-            <span class="mini-muted">来自问答记录</span>
+            <button id="qaDirectoryBtn" class="qa-directory-link" type="button"><span>问答记录</span><span id="qaCountBadge">0</span></button>
           </div>
           <div id="thoughtThreadList" class="thought-thread-list"></div>
         </section>
@@ -791,7 +822,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           <div id="cloudInfo">公开浏览不需要登录；编辑保存需要你的 GitHub Token。</div>
         </div>
 
-        <div class="section-head"><span>日记目录</span><button id="sortToggleBtn" class="sort-toggle-btn" type="button">排序</button></div>
+        <div class="section-head"><span id="directoryTitle">普通日记</span><button id="sortToggleBtn" class="sort-toggle-btn" type="button">排序</button></div>
         <div id="entryList" class="entry-list" aria-label="日记目录"></div>
         <p class="status" id="statusText"></p>
       </aside>
@@ -1081,6 +1112,9 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       thinkingConclusionView: document.getElementById("thinkingConclusionView"),
       thinkingOpenView: document.getElementById("thinkingOpenView"),
       thoughtThreadList: document.getElementById("thoughtThreadList"),
+      qaDirectoryBtn: document.getElementById("qaDirectoryBtn"),
+      qaCountBadge: document.getElementById("qaCountBadge"),
+      directoryTitle: document.getElementById("directoryTitle"),
       thinkingModal: document.getElementById("thinkingModal"),
       thinkingThemeInput: document.getElementById("thinkingThemeInput"),
       thinkingCoreInput: document.getElementById("thinkingCoreInput"),
@@ -1396,6 +1430,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
     function getEntriesForActiveView() {
       const base = activeView === "trash" ? entries.filter(e => e.deleted) : nonDeletedEntries();
+      if (activeView === "qa") return base.filter(entry => isQaEntry(entry));
+      if (activeView === "directory" || activeView === "all") return base.filter(entry => !isQaEntry(entry));
       if (activeView === "favorites") return base.filter(entry => entry.favorite);
       if (activeView === "date" && selectedDate) return base.filter(entry => entry.date === selectedDate);
       if (activeView === "tag" && selectedTag) return base.filter(entry => entry.tags.includes(selectedTag));
@@ -2024,7 +2060,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         announcement = normalized.announcement;
         thinking = normalized.thinking || defaultThinking();
         remoteSha = null;
-        currentId = sortedEntries()[0]?.id || null;
+        currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
         saveBackup();
         renderAll();
         renderCloudStatus(null, `已读取 ${path}。${hasGithubConfig() ? `${config.owner}/${config.repo}` : "还未填写 GitHub 设置。"}`);
@@ -2037,7 +2073,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
             moods = normalized.moods || {};
             announcement = normalized.announcement;
             thinking = normalized.thinking || defaultThinking();
-            currentId = sortedEntries()[0]?.id || null;
+            currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
             renderAll();
             renderCloudStatus("error", "云端数据暂时读取失败，已显示本机备份。部署后请确认 data/entries.json 存在。");
             return;
@@ -2048,7 +2084,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         moods = normalized.moods || {};
         announcement = normalized.announcement;
         thinking = normalized.thinking || defaultThinking();
-        currentId = sortedEntries()[0]?.id || null;
+        currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
         renderAll();
         renderCloudStatus("error", "未读取到 data/entries.json，已显示示例数据。");
       }
@@ -2142,11 +2178,6 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           });
         }
       });
-      if (!items.length) {
-        sortedEntries().filter(entry => !entry.deleted).slice(0, 8).forEach((entry, index) => {
-          items.push({ entry, text: entry.title || "未命名日记", index, type: "entry" });
-        });
-      }
       return items.slice(0, 12);
     }
 
@@ -2156,14 +2187,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       box.innerHTML = "";
       const items = getThoughtThreadItems();
       if (!items.length) {
-        box.innerHTML = `<div class="mini-muted">问答式日记里的问题会自动出现在这里。</div>`;
+        box.innerHTML = `<div class="mini-muted">问答记录里的问题会自动出现在这里。点击右上角“问答记录”可查看全部问答日记。</div>`;
         return;
       }
       items.forEach((item, i) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "thought-thread-item";
-        const source = item.type === "qa" ? `${item.entry.title || "问答记录"} · Q${item.index + 1}` : "普通日记";
+        const source = item.type === "qa" ? `来自问答记录 · ${item.entry.title || "未命名"} · Q${item.index + 1}` : "普通日记";
         button.innerHTML = `
           <span class="thought-index">${String(i + 1).padStart(2, "0")}</span>
           <span class="thought-thread-copy">
@@ -2224,6 +2255,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         const isActive = view === activeView || (view === "all" && activeView === "date") || (view === "tags" && activeView === "tag");
         item.classList.toggle("active", isActive);
       });
+      if (els.qaDirectoryBtn) els.qaDirectoryBtn.classList.toggle("active", activeView === "qa");
     }
 
     function renderList() {
@@ -2236,6 +2268,18 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         els.sortToggleBtn.classList.toggle("active", sortMode && canSort);
         els.sortToggleBtn.textContent = sortMode && canSort ? "完成" : "排序";
         els.sortToggleBtn.title = canSort ? "点击后显示上移/下移按钮，自由调整目录顺序" : "回收站中不支持排序";
+      }
+      if (els.directoryTitle) {
+        const titleMap = {
+          directory: "普通日记",
+          qa: "问答记录",
+          trash: "回收站",
+          date: selectedDate ? `${selectedDate} 的日记` : "按日期",
+          tag: selectedTag ? `#${selectedTag}` : "标签日记",
+          favorites: "收藏",
+          all: "普通日记"
+        };
+        els.directoryTitle.textContent = titleMap[activeView] || "普通日记";
       }
       const allVisibleForView = getEntriesForActiveView().sort(compareByManualOrder);
 
@@ -2307,6 +2351,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
             all: "还没有日记。",
             favorites: "还没有收藏的日记。打开一篇日记后点“收藏”即可加入这里。",
             trash: "回收站是空的。",
+            qa: "还没有问答记录。点击“新增日记”后切换为问答记录即可创建。",
             date: selectedDate ? `${selectedDate} 这一天还没有日记。` : "这一天还没有日记。",
             tag: selectedTag ? `#${selectedTag} 标签下还没有日记。` : "这个标签下还没有日记。"
           };
@@ -2316,7 +2361,9 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
       const activeEntries = nonDeletedEntries();
       const tags = new Set(activeEntries.flatMap(e => e.tags));
-      const totalCount = String(activeEntries.length);
+      const normalCountValue = activeEntries.filter(e => !isQaEntry(e)).length;
+      const qaCountValue = activeEntries.filter(e => isQaEntry(e)).length;
+      const totalCount = String(normalCountValue);
       const favoriteCount = String(activeEntries.filter(e => e.favorite).length);
       const trashCount = String(entries.filter(e => e.deleted).length);
       const tagCount = String(tags.size);
@@ -2325,13 +2372,15 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (els.trashCountNav) els.trashCountNav.textContent = trashCount;
       if (els.tagCountNav) els.tagCountNav.textContent = tagCount;
       document.querySelectorAll('[data-mobile-count="total"]').forEach(el => el.textContent = totalCount);
+      if (els.qaCountBadge) els.qaCountBadge.textContent = String(qaCountValue);
       document.querySelectorAll('[data-mobile-count="favorite"]').forEach(el => el.textContent = favoriteCount);
       document.querySelectorAll('[data-mobile-count="trash"]').forEach(el => el.textContent = trashCount);
       document.querySelectorAll('[data-mobile-count="tag"]').forEach(el => el.textContent = tagCount);
 
       const viewNames = {
-        directory: "目录",
-        all: "全部日记",
+        directory: "普通日记",
+        qa: "问答记录",
+        all: "普通日记",
         favorites: "收藏",
         tags: "标签",
         trash: "回收站",
@@ -2345,7 +2394,11 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       let title = "还没有日记";
       let desc = "点击左侧“新增日记”，开始写第一篇。";
       let buttonText = "新增第一篇日记";
-      if (activeView === "favorites") {
+      if (activeView === "qa") {
+        title = "还没有问答记录";
+        desc = "点击“新增日记”，再选择“问答记录”格式，就可以创建第一篇问答记录。";
+        buttonText = "新增问答记录";
+      } else if (activeView === "favorites") {
         title = "还没有收藏";
         desc = "打开一篇日记后点击“收藏”，它会出现在这里。";
         buttonText = "新增日记";
@@ -2479,7 +2532,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           `;
           item.addEventListener("click", () => {
             currentId = entry.id;
-            activeView = "directory";
+            activeView = isQaEntry(entry) ? "qa" : "directory";
             selectedDate = null;
             selectedTag = null;
             renderAll(false);
@@ -2622,11 +2675,11 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       const entry = {
         id: `entry-${today}-${Date.now()}`,
         date: today,
-        title: "新日记",
+        title: activeView === "qa" ? "新问答记录" : "新日记",
         tags: [],
         content: "",
-        format: "normal",
-        qaPairs: [],
+        format: activeView === "qa" ? "qa" : "normal",
+        qaPairs: activeView === "qa" ? normalizeQaPairs([{ question: "", answer: "" }]) : [],
         favorite: false,
         deleted: false,
         order: nextEntryOrder(),
@@ -2777,7 +2830,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (!confirm(`确定把《${entry.title}》移到回收站吗？`)) return;
       entry.deleted = true;
       entry.updatedAt = new Date().toISOString();
-      currentId = sortedEntries()[0]?.id || null;
+      currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
       activeView = "trash";
       selectedDate = null;
       selectedTag = null;
@@ -2815,7 +2868,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (!entry || !entry.deleted) return;
       entry.deleted = false;
       entry.updatedAt = new Date().toISOString();
-      activeView = "directory";
+      activeView = isQaEntry(entry) ? "qa" : "directory";
       selectedDate = null;
       selectedTag = null;
       saveBackup();
@@ -2903,6 +2956,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     els.search.addEventListener("input", renderList);
     els.newBtn.addEventListener("click", () => createEntry());
     if (els.trashBtn) els.trashBtn.addEventListener("click", () => setActiveView("trash"));
+    if (els.qaDirectoryBtn) els.qaDirectoryBtn.addEventListener("click", () => setActiveView("qa"));
     if (els.sortToggleBtn) els.sortToggleBtn.addEventListener("click", () => { sortMode = !sortMode; renderList(); showToast(sortMode ? "已开启排序，使用上移/下移调整目录" : "已完成排序"); });
     els.quickNewBtn.addEventListener("click", () => createEntry());
     if (els.emptyNewBtn) els.emptyNewBtn.addEventListener("click", () => createEntry(activeView === "date" ? selectedDate : null));
