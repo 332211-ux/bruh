@@ -336,6 +336,20 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 .entry-move-actions { display:flex; gap:8px; margin-top: 2px; }
 .entry-move-actions button { min-height: 32px; padding: 6px 11px; font-size: 12px; }
 .list-empty { color: var(--muted-2); padding: 18px; border-radius: 22px; background: rgba(255,255,255,.55); border: 1px dashed var(--line-strong); line-height: 1.7; }
+.qa-page { display: none; padding: clamp(18px, 3vw, 28px); min-height: calc(100vh - 128px); }
+.qa-page.active { display: block; }
+.qa-page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 20px; position: relative; z-index: 1; }
+.qa-page-kicker { display:inline-flex; min-height:34px; align-items:center; padding:7px 12px; border-radius:999px; background: rgba(37,99,235,.08); color: var(--blue); border: 1px solid rgba(37,99,235,.10); font-size: 13px; font-weight: 900; }
+.qa-page-title { margin: 12px 0 8px; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; letter-spacing: -.05em; color: var(--ink); }
+.qa-page-desc { margin: 0; color: var(--muted); line-height: 1.7; font-weight: 650; }
+.qa-page-actions { display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; }
+.qa-page-list { display:grid; gap:14px; position: relative; z-index: 1; }
+.qa-page-item { position: relative; display:grid; gap:9px; padding: 18px; border-radius: 26px; border: 1px solid rgba(255,255,255,.74); background: rgba(255,255,255,.78); box-shadow: 0 14px 30px rgba(18,38,76,.07); cursor:pointer; overflow:hidden; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; text-align:left; }
+.qa-page-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); border-color: rgba(37,99,235,.24); }
+.qa-page-item::before { content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: linear-gradient(to bottom, var(--blue), var(--violet)); opacity:.82; }
+.qa-page-item .qa-page-meta { display:flex; flex-wrap:wrap; gap:7px; color: var(--muted); font-size: 12px; font-weight: 750; }
+.qa-page-item .qa-page-title-small { color: var(--ink); font-size: 20px; font-weight: 950; line-height: 1.35; letter-spacing: -.02em; }
+.qa-page-item .qa-page-preview { color: var(--muted); line-height: 1.65; font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .status { margin: 0; color: var(--muted-2); font-size: 12px; line-height: 1.6; }
 .tag-list-button { display:flex; align-items:center; justify-content:space-between; width:100%; min-height: 52px; border-radius: 18px; }
 .tag-list-button.active { color:#fff; background: linear-gradient(135deg,var(--blue),var(--violet)); border-color: transparent; }
@@ -637,7 +651,11 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   .thought-thread-list { max-height: none; }
   .entry-item { padding: 16px; border-radius: 24px; }
   .entry-title { font-size: 19px; }
-  .viewer, .editor, .settings-panel { min-height: auto; padding: 16px; border-radius: 28px; }
+  .viewer, .editor, .settings-panel, .qa-page { min-height: auto; padding: 16px; border-radius: 28px; }
+  .qa-page-head { display:grid; gap: 12px; }
+  .qa-page-actions { justify-content:flex-start; }
+  .qa-page-item { border-radius: 24px; padding: 16px; }
+  .qa-page-title { font-size: 32px; }
   .topline { display: grid; gap: 12px; }
   .entry-actions, .settings-actions { justify-content: flex-start; }
   .view-title { font-size: 32px; }
@@ -850,6 +868,23 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
             <span id="entryFooterRight">—</span>
           </div>
           <p class="small-note">你本人在“同步设置”中填入 Token 后，点击保存会直接更新仓库里的 <code>data/entries.json</code>。</p>
+        </section>
+
+        <section id="qaDirectoryPage" class="qa-page content-card" aria-label="问答记录目录">
+          <div class="qa-page-head">
+            <div>
+              <div class="qa-page-kicker">问答记录</div>
+              <h2 class="qa-page-title">问答记录目录</h2>
+              <p class="qa-page-desc">这里单独整理所有问答式日记。普通日记目录仍然保留在首页，不会被替换。</p>
+            </div>
+            <div class="qa-page-actions">
+              <button id="qaPageBackBtn" type="button">返回首页</button>
+              <button id="qaPageSortBtn" type="button">排序</button>
+              <button id="qaPageNewBtn" class="primary" type="button">新增问答记录</button>
+            </div>
+          </div>
+          <div id="qaPageList" class="qa-page-list"></div>
+          <p id="qaPageStatus" class="status"></p>
         </section>
 
         <section id="emptyState" class="empty-state content-card" hidden>
@@ -1069,7 +1104,9 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     };
     let currentId = null;
     let activeView = "directory";
+    let pageMode = new URLSearchParams(window.location.search).get("page") === "qa" ? "qa-directory" : "home";
     let sortMode = false;
+    let qaSortMode = false;
     let selectedDate = null;
     let selectedTag = null;
     let selectedMoodDate = null;
@@ -1114,6 +1151,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       thoughtThreadList: document.getElementById("thoughtThreadList"),
       qaDirectoryBtn: document.getElementById("qaDirectoryBtn"),
       qaCountBadge: document.getElementById("qaCountBadge"),
+      qaDirectoryPage: document.getElementById("qaDirectoryPage"),
+      qaPageList: document.getElementById("qaPageList"),
+      qaPageStatus: document.getElementById("qaPageStatus"),
+      qaPageBackBtn: document.getElementById("qaPageBackBtn"),
+      qaPageSortBtn: document.getElementById("qaPageSortBtn"),
+      qaPageNewBtn: document.getElementById("qaPageNewBtn"),
       directoryTitle: document.getElementById("directoryTitle"),
       thinkingModal: document.getElementById("thinkingModal"),
       thinkingThemeInput: document.getElementById("thinkingThemeInput"),
@@ -1229,6 +1272,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function closeMobileDetail() {
+      if (pageMode === "qa-directory") {
+        setRoutePage("home");
+        return;
+      }
       document.body.classList.remove("mobile-detail");
       closeMobileTools();
       renderAll(false);
@@ -2091,6 +2138,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function setActiveView(view, options = {}) {
+      pageMode = "home";
+      if (els.qaDirectoryPage) els.qaDirectoryPage.classList.remove("active");
       activeView = view;
       if (view === "trash") sortMode = false;
       if ("date" in options) selectedDate = options.date;
@@ -2187,14 +2236,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       box.innerHTML = "";
       const items = getThoughtThreadItems();
       if (!items.length) {
-        box.innerHTML = `<div class="mini-muted">问答记录里的问题会自动出现在这里。点击右上角“问答记录”可查看全部问答日记。</div>`;
+        box.innerHTML = `<div class="mini-muted">问答记录里的问题会自动出现在这里。点击右上角“问答记录”会跳转到独立的问答记录目录。</div>`;
         return;
       }
       items.forEach((item, i) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "thought-thread-item";
-        const source = item.type === "qa" ? `来自问答记录 · ${item.entry.title || "未命名"} · Q${item.index + 1}` : "普通日记";
+        const source = item.type === "qa" ? `问答记录 · ${item.entry.title || "未命名"} · Q${item.index + 1}` : "普通日记";
         button.innerHTML = `
           <span class="thought-index">${String(i + 1).padStart(2, "0")}</span>
           <span class="thought-thread-copy">
@@ -2203,6 +2252,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           </span>
         `;
         button.addEventListener("click", () => {
+          pageMode = "home";
+          const url = new URL(window.location.href);
+          url.searchParams.delete("page");
+          window.history.pushState({ pageMode }, "", url);
           currentId = item.entry.id;
           activeView = "directory";
           selectedDate = null;
@@ -2255,7 +2308,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         const isActive = view === activeView || (view === "all" && activeView === "date") || (view === "tags" && activeView === "tag");
         item.classList.toggle("active", isActive);
       });
-      if (els.qaDirectoryBtn) els.qaDirectoryBtn.classList.toggle("active", activeView === "qa");
+      if (els.qaDirectoryBtn) els.qaDirectoryBtn.classList.toggle("active", pageMode === "qa-directory");
     }
 
     function renderList() {
@@ -2585,7 +2638,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     async function moveEntry(id, direction) {
-      const visible = getEntriesForActiveView().sort(compareByManualOrder);
+      const visible = (pageMode === "qa-directory" ? nonDeletedEntries().filter(isQaEntry) : getEntriesForActiveView()).sort(compareByManualOrder);
       const index = visible.findIndex(entry => entry.id === id);
       if (index < 0) return;
       const targetIndex = direction === "up" ? index - 1 : index + 1;
@@ -2603,16 +2656,111 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (hasGithubConfig() && getToken()) await saveEntriesToGithub();
     }
 
+    function setRoutePage(nextMode, options = {}) {
+      pageMode = nextMode === "qa-directory" ? "qa-directory" : "home";
+      const url = new URL(window.location.href);
+      if (pageMode === "qa-directory") {
+        url.searchParams.set("page", "qa");
+      } else {
+        url.searchParams.delete("page");
+      }
+      if (options.replace) {
+        window.history.replaceState({ pageMode }, "", url);
+      } else {
+        window.history.pushState({ pageMode }, "", url);
+      }
+      renderAll(false);
+      if (pageMode === "qa-directory") {
+        openMobileDetail();
+        closeMobileTools();
+      } else if (isMobileView()) {
+        document.body.classList.remove("mobile-detail");
+      }
+    }
+
+    function renderQaDirectoryPage() {
+      if (!els.qaDirectoryPage || !els.qaPageList) return;
+      const keyword = els.search?.value.trim().toLowerCase() || "";
+      const qaEntries = nonDeletedEntries().filter(isQaEntry).sort(compareByManualOrder);
+      const filtered = qaEntries.filter(entry => {
+        const text = [entry.title, entry.tags.join(" "), entryPlainText(entry)].join(" ").toLowerCase();
+        return text.includes(keyword);
+      });
+      els.qaPageList.innerHTML = "";
+      if (els.qaPageSortBtn) {
+        els.qaPageSortBtn.classList.toggle("active", qaSortMode);
+        els.qaPageSortBtn.textContent = qaSortMode ? "完成" : "排序";
+      }
+      if (!filtered.length) {
+        els.qaPageList.innerHTML = `<div class="list-empty">还没有问答记录。点击“新增问答记录”创建第一篇。</div>`;
+      } else {
+        filtered.forEach((entry, index) => {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "qa-page-item";
+          const firstQuestion = Array.isArray(entry.qaPairs) && entry.qaPairs.length ? contentToPlainText(entry.qaPairs[0].question || "").trim() : "";
+          const qaCount = Array.isArray(entry.qaPairs) ? entry.qaPairs.length : 0;
+          const tags = entry.tags.length ? entry.tags.map(tag => `#${escapeHtml(tag)}`).join(" ") : "暂无标签";
+          const showMove = qaSortMode && !keyword;
+          item.innerHTML = `
+            <span class="qa-page-title-small">${escapeHtml(entry.title || "未命名问答")}</span>
+            <span class="qa-page-meta"><span>问答记录</span><span>${qaCount} 组问答</span><span>${tags}</span></span>
+            <span class="qa-page-preview">${escapeHtml(firstQuestion || "还没有填写问题。")}</span>
+            ${showMove ? `<span class="entry-move-actions"><button type="button" data-move="up" ${index === 0 ? "disabled" : ""}>上移</button><button type="button" data-move="down" ${index === filtered.length - 1 ? "disabled" : ""}>下移</button></span>` : ""}
+          `;
+          item.addEventListener("click", event => {
+            const moveBtn = event.target.closest?.("[data-move]");
+            if (moveBtn) {
+              event.preventDefault();
+              event.stopPropagation();
+              moveEntry(entry.id, moveBtn.dataset.move);
+              renderQaDirectoryPage();
+              return;
+            }
+            currentId = entry.id;
+            pageMode = "home";
+            const url = new URL(window.location.href);
+            url.searchParams.delete("page");
+            window.history.pushState({ pageMode }, "", url);
+            renderAll(false);
+            showViewer();
+            openMobileDetail();
+          });
+          els.qaPageList.appendChild(item);
+        });
+      }
+      if (els.qaPageStatus) {
+        els.qaPageStatus.textContent = `问答记录 · ${filtered.length} 项。${qaSortMode ? "排序模式已开启。" : ""}`;
+      }
+    }
+
+    function showQaDirectoryPage() {
+      if (!els.qaDirectoryPage) return;
+      els.viewer.classList.add("hidden");
+      els.empty.hidden = true;
+      els.editor.classList.remove("active");
+      els.settings.classList.remove("active");
+      els.qaDirectoryPage.classList.add("active");
+      renderQaDirectoryPage();
+    }
+
     function renderAll(closePanels = true) {
       renderAnnouncement();
       renderThinking();
       renderList();
+      renderQaDirectoryPage();
       renderViewer();
       renderWidgets();
-      if (closePanels) showViewer();
+      if (pageMode === "qa-directory") {
+        showQaDirectoryPage();
+      } else if (closePanels) {
+        showViewer();
+      }
     }
 
     function showViewer() {
+      pageMode = "home";
+      if (els.qaDirectoryPage) els.qaDirectoryPage.classList.remove("active");
       els.editor.classList.remove("active");
       els.settings.classList.remove("active");
       if (getCurrentEntry()) {
@@ -2625,6 +2773,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function showSettings() {
+      pageMode = "home";
+      if (els.qaDirectoryPage) els.qaDirectoryPage.classList.remove("active");
       openMobileDetail();
       closeMobileTools();
       els.viewer.classList.add("hidden");
@@ -2641,6 +2791,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         createEntry();
         return;
       }
+      pageMode = "home";
+      if (els.qaDirectoryPage) els.qaDirectoryPage.classList.remove("active");
       els.viewer.classList.add("hidden");
       els.empty.hidden = true;
       els.settings.classList.remove("active");
@@ -2670,16 +2822,17 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         : `现在可以编辑，但还没有完整的 GitHub 设置或 Token。点击保存会先保存到本机浏览器；要让别人在线看到，请点左侧“设置”填入 Owner、Repository 和 Token。`;
     }
 
-    function createEntry(dateOverride = null) {
+    function createEntry(dateOverride = null, formatOverride = null) {
       const today = dateOverride || selectedDate || new Date().toISOString().slice(0, 10);
+      const entryFormat = formatOverride || (activeView === "qa" ? "qa" : "normal");
       const entry = {
         id: `entry-${today}-${Date.now()}`,
         date: today,
-        title: activeView === "qa" ? "新问答记录" : "新日记",
+        title: entryFormat === "qa" ? "新问答记录" : "新日记",
         tags: [],
         content: "",
-        format: activeView === "qa" ? "qa" : "normal",
-        qaPairs: activeView === "qa" ? normalizeQaPairs([{ question: "", answer: "" }]) : [],
+        format: entryFormat,
+        qaPairs: entryFormat === "qa" ? normalizeQaPairs([{ question: "", answer: "" }]) : [],
         favorite: false,
         deleted: false,
         order: nextEntryOrder(),
@@ -2688,6 +2841,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       };
       entries.push(entry);
       currentId = entry.id;
+      pageMode = "home";
+      const url = new URL(window.location.href);
+      url.searchParams.delete("page");
+      window.history.pushState({ pageMode }, "", url);
       saveBackup();
       renderList();
       renderViewer();
@@ -2953,10 +3110,13 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       });
     });
 
-    els.search.addEventListener("input", renderList);
+    els.search.addEventListener("input", () => { renderList(); renderQaDirectoryPage(); });
     els.newBtn.addEventListener("click", () => createEntry());
     if (els.trashBtn) els.trashBtn.addEventListener("click", () => setActiveView("trash"));
-    if (els.qaDirectoryBtn) els.qaDirectoryBtn.addEventListener("click", () => setActiveView("qa"));
+    if (els.qaDirectoryBtn) els.qaDirectoryBtn.addEventListener("click", () => setRoutePage("qa-directory"));
+    if (els.qaPageBackBtn) els.qaPageBackBtn.addEventListener("click", () => setRoutePage("home"));
+    if (els.qaPageSortBtn) els.qaPageSortBtn.addEventListener("click", () => { qaSortMode = !qaSortMode; renderQaDirectoryPage(); showToast(qaSortMode ? "已开启问答记录排序" : "已完成排序"); });
+    if (els.qaPageNewBtn) els.qaPageNewBtn.addEventListener("click", () => createEntry(null, "qa"));
     if (els.sortToggleBtn) els.sortToggleBtn.addEventListener("click", () => { sortMode = !sortMode; renderList(); showToast(sortMode ? "已开启排序，使用上移/下移调整目录" : "已完成排序"); });
     els.quickNewBtn.addEventListener("click", () => createEntry());
     if (els.emptyNewBtn) els.emptyNewBtn.addEventListener("click", () => createEntry(activeView === "date" ? selectedDate : null));
@@ -3060,6 +3220,17 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         document.body.classList.remove("mobile-detail", "mobile-tools-open", "mobile-no-scroll");
       }
     });
+
+    window.addEventListener("popstate", () => {
+      pageMode = new URLSearchParams(window.location.search).get("page") === "qa" ? "qa-directory" : "home";
+      renderAll(false);
+      if (pageMode === "qa-directory") openMobileDetail();
+      else if (isMobileView()) document.body.classList.remove("mobile-detail");
+    });
+
+    if (pageMode === "qa-directory") {
+      window.history.replaceState({ pageMode }, "", window.location.href);
+    }
 
     loadConfig();
     loadEntriesFromRemote();
