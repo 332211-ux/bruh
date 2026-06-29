@@ -2243,7 +2243,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         const button = document.createElement("button");
         button.type = "button";
         button.className = "thought-thread-item";
-        const source = item.type === "qa" ? `问答记录 · ${item.entry.title || "未命名"} · Q${item.index + 1}` : "普通日记";
+        const source = item.type === "qa" ? `${item.entry.title || "未命名"} · Q${item.index + 1}` : "普通日记";
         button.innerHTML = `
           <span class="thought-index">${String(i + 1).padStart(2, "0")}</span>
           <span class="thought-thread-copy">
