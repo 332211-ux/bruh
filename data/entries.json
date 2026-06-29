@@ -79,7 +79,9 @@
       "id": "entry-2026-06-29-1782707840742",
       "date": "2026-06-29",
       "title": "爹系男友喜欢吗",
-      "tags": [],
+      "tags": [
+        "This is true music"
+      ],
       "content": "",
       "format": "qa",
       "qaPairs": [
@@ -104,7 +106,7 @@
       "deleted": false,
       "order": 4,
       "createdAt": "2026-06-29T04:37:20.743Z",
-      "updatedAt": "2026-06-29T14:28:24.626Z"
+      "updatedAt": "2026-06-29T14:40:34.941Z"
     },
     {
       "id": "entry-2026-06-25-1782375534022",
