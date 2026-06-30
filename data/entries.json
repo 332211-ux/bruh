@@ -361,10 +361,10 @@
         }
       ],
       "favorite": false,
-      "deleted": false,
+      "deleted": true,
       "order": 16,
       "createdAt": "2026-06-28T09:18:13.443Z",
-      "updatedAt": "2026-06-28T09:19:22.012Z"
+      "updatedAt": "2026-06-30T00:56:06.945Z"
     }
   ]
 }
