@@ -589,6 +589,62 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+
+/* Mobile home: clean public landing page with only search, QA notes, diary notes and calendar. */
+.mobile-home-dashboard { display: none !important; }
+.mobile-home-section {
+  position: relative;
+  border-radius: 32px;
+  padding: 18px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(226,232,240,.78);
+  box-shadow: 0 22px 60px rgba(15,23,42,.08);
+  overflow: hidden;
+}
+.mobile-home-section::before {
+  content: "";
+  position: absolute; inset: 0 auto 0 0; width: 4px;
+  background: linear-gradient(180deg, var(--blue), var(--violet));
+  opacity: .9;
+}
+.mobile-section-head { display:flex; align-items:flex-end; justify-content:space-between; gap: 12px; margin-bottom: 14px; }
+.mobile-section-kicker { margin:0 0 4px; color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.mobile-section-head h2 { margin:0; font-size: 23px; line-height: 1.05; letter-spacing: -.045em; color: var(--ink); }
+.mobile-link-btn, .mobile-section-count {
+  border: 1px solid rgba(148,163,184,.24);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: var(--muted);
+  background: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+.mobile-link-btn { color: var(--blue); cursor:pointer; }
+.mobile-preview-list { display:grid; gap: 14px; }
+.mobile-preview-card {
+  position: relative;
+  display:block; width:100%; text-align:left;
+  border: 1px solid rgba(226,232,240,.86);
+  border-radius: 30px;
+  padding: 18px 18px 18px 20px;
+  background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(248,251,255,.82));
+  box-shadow: 0 18px 45px rgba(15,23,42,.065);
+  overflow:hidden;
+}
+.mobile-preview-card::before {
+  content:""; position:absolute; left:0; top:18px; bottom:18px; width:4px; border-radius: 999px;
+  background: linear-gradient(180deg, var(--blue), var(--violet));
+}
+.mobile-preview-card:active { transform: translateY(1px) scale(.995); }
+.mobile-preview-title { display:block; color: var(--ink); font-size: 22px; font-weight: 950; letter-spacing: -.035em; line-height: 1.25; margin-bottom: 9px; }
+.mobile-preview-meta { display:flex; flex-wrap:wrap; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 850; line-height: 1.35; margin-bottom: 9px; }
+.mobile-preview-text { display:-webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow:hidden; color: #64748b; font-size: 15px; font-weight: 800; line-height: 1.55; }
+.mobile-preview-empty { padding: 18px; border-radius: 24px; background: rgba(255,255,255,.62); color: var(--muted); font-weight: 800; border:1px dashed rgba(148,163,184,.34); }
+.mobile-calendar-section .calendar-grid { margin-top: 6px; }
+.mobile-calendar-section .calendar-day { min-height: 52px; }
+.mobile-calendar-section .cal-pill { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
+
 @media (max-width: 1220px) {
   .layout { grid-template-columns: minmax(280px, 330px) minmax(500px, 1fr); }
   .right-rail { position: fixed; right: 22px; top: 104px; bottom: 22px; width: min(360px, calc(100vw - 44px)); z-index: 60; transform: translateX(calc(100% + 40px)); transition: transform .24s ease; max-height: none; padding: 0; }
@@ -679,6 +735,16 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   .qa-collapse-hint { right: 12px; bottom: 7px; font-size: 11px; padding: 2px 5px; }
   .modal-overlay { align-items: end; padding: 10px; }
   .modal-panel { width: 100%; border-radius: 28px; padding: 16px; max-height: 86vh; }
+
+  .mobile-home-dashboard { display: grid !important; gap: 18px; order: 1; }
+  .directory-total-nav, .thought-thread-card, .announcement-card, .section-head, .entry-list, .status { display: none !important; }
+  .mobile-home-section { animation: fadeUp .22s ease both; }
+  .mobile-qa-section { animation-delay: .02s; }
+  .mobile-normal-section { animation-delay: .06s; }
+  .mobile-calendar-section { animation-delay: .10s; }
+  .mobile-preview-card { min-height: 132px; }
+  .mobile-normal-section .mobile-preview-card { min-height: 116px; }
+
 }
 
 @media (max-width: 380px) {
@@ -806,10 +872,45 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           </div>
         </nav>
 
+        <section id="mobileHomeDashboard" class="mobile-home-dashboard mobile-only" aria-label="移动端首页">
+          <section class="mobile-home-section mobile-qa-section">
+            <div class="mobile-section-head">
+              <div>
+                <p class="mobile-section-kicker">Q&A Notes</p>
+                <h2>问答日记</h2>
+              </div>
+              <button id="mobileQaAllBtn" class="mobile-link-btn" type="button">全部</button>
+            </div>
+            <div id="mobileQaPreviewList" class="mobile-preview-list"></div>
+          </section>
+
+          <section class="mobile-home-section mobile-normal-section">
+            <div class="mobile-section-head">
+              <div>
+                <p class="mobile-section-kicker">Diary Notes</p>
+                <h2>普通日记</h2>
+              </div>
+              <span id="mobileNormalCount" class="mobile-section-count">0 篇</span>
+            </div>
+            <div id="mobileNormalPreviewList" class="mobile-preview-list"></div>
+          </section>
+
+          <section class="mobile-home-section mobile-calendar-section">
+            <div class="mobile-section-head">
+              <div>
+                <p class="mobile-section-kicker">Mood Calendar</p>
+                <h2>日历</h2>
+              </div>
+              <span id="mobileCalendarTitle" class="mobile-section-count">—</span>
+            </div>
+            <div id="mobileCalendarGrid" class="calendar-grid mobile-calendar-grid"></div>
+          </section>
+        </section>
+
         <section class="thought-thread-card" aria-label="思考脉络">
           <div class="thought-thread-head">
             <b>思考脉络</b>
-            <button id="qaDirectoryBtn" class="qa-directory-link" type="button"><span>所有问答</span><span id="qaCountBadge">0</span></button>
+            <button id="qaDirectoryBtn" class="qa-directory-link" type="button"><span>问答记录</span><span id="qaCountBadge">0</span></button>
           </div>
           <div id="thoughtThreadList" class="thought-thread-list"></div>
         </section>
@@ -1200,6 +1301,13 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       monthCount: document.getElementById("monthCount"),
       tagCloud: document.getElementById("tagCloud"),
       recentList: document.getElementById("recentList"),
+      mobileHomeDashboard: document.getElementById("mobileHomeDashboard"),
+      mobileQaPreviewList: document.getElementById("mobileQaPreviewList"),
+      mobileNormalPreviewList: document.getElementById("mobileNormalPreviewList"),
+      mobileNormalCount: document.getElementById("mobileNormalCount"),
+      mobileQaAllBtn: document.getElementById("mobileQaAllBtn"),
+      mobileCalendarTitle: document.getElementById("mobileCalendarTitle"),
+      mobileCalendarGrid: document.getElementById("mobileCalendarGrid"),
       newBtn: document.getElementById("newBtn"),
       trashBtn: document.getElementById("trashBtn"),
       sortToggleBtn: document.getElementById("sortToggleBtn"),
@@ -2514,35 +2622,40 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       const daysInMonth = new Date(y, m + 1, 0).getDate();
       const activeEntries = nonDeletedEntries();
       const entryDateSet = new Set(activeEntries.map(entry => entry.date).filter(Boolean));
-      els.calendarTitle.textContent = `${y}年${m + 1}月`;
-      const names = ["日", "一", "二", "三", "四", "五", "六"];
-      els.calendarGrid.innerHTML = "";
-      names.forEach(n => {
-        const span = document.createElement("span");
-        span.className = "dayname";
-        span.textContent = n;
-        els.calendarGrid.appendChild(span);
-      });
-      for (let i = 0; i < firstDay; i++) els.calendarGrid.insertAdjacentHTML("beforeend", `<span></span>`);
-      for (let d = 1; d <= daysInMonth; d++) {
-        const day = String(d).padStart(2, "0");
-        const date = `${y}-${String(m + 1).padStart(2, "0")}-${day}`;
-        const button = document.createElement("button");
-        button.type = "button";
-        const hasDiary = entryDateSet.has(date);
-        const mood = calendarMoodText(date);
-        button.innerHTML = mood
-          ? `<span class="cal-pill"><span class="cal-day-num">${d}</span><span class="cal-mood">${escapeHtml(mood)}</span></span>`
-          : `<span class="cal-pill"><span class="cal-day-num">${d}</span>${hasDiary ? `<span class="cal-dot" aria-hidden="true"></span>` : ""}</span>`;
-        button.title = mood ? `${date}｜心情：${mood}。点击修改心情` : `${date}｜点击添加心情`;
-        button.className = [
-          "calendar-day",
-          date === refDate ? "today selected" : "",
-          mood ? "has-entry has-mood" : (hasDiary ? "has-entry" : "no-entry")
-        ].filter(Boolean).join(" ");
-        button.addEventListener("click", () => openMoodEditor(date));
-        els.calendarGrid.appendChild(button);
-      }
+      const renderCalendar = (grid, titleEl) => {
+        if (!grid) return;
+        if (titleEl) titleEl.textContent = `${y}年${m + 1}月`;
+        const names = ["日", "一", "二", "三", "四", "五", "六"];
+        grid.innerHTML = "";
+        names.forEach(n => {
+          const span = document.createElement("span");
+          span.className = "dayname";
+          span.textContent = n;
+          grid.appendChild(span);
+        });
+        for (let i = 0; i < firstDay; i++) grid.insertAdjacentHTML("beforeend", `<span></span>`);
+        for (let d = 1; d <= daysInMonth; d++) {
+          const day = String(d).padStart(2, "0");
+          const date = `${y}-${String(m + 1).padStart(2, "0")}-${day}`;
+          const button = document.createElement("button");
+          button.type = "button";
+          const hasDiary = entryDateSet.has(date);
+          const mood = calendarMoodText(date);
+          button.innerHTML = mood
+            ? `<span class="cal-pill"><span class="cal-day-num">${d}</span><span class="cal-mood">${escapeHtml(mood)}</span></span>`
+            : `<span class="cal-pill"><span class="cal-day-num">${d}</span>${hasDiary ? `<span class="cal-dot" aria-hidden="true"></span>` : ""}</span>`;
+          button.title = mood ? `${date}｜心情：${mood}。点击修改心情` : `${date}｜点击添加心情`;
+          button.className = [
+            "calendar-day",
+            date === refDate ? "today selected" : "",
+            mood ? "has-entry has-mood" : (hasDiary ? "has-entry" : "no-entry")
+          ].filter(Boolean).join(" ");
+          button.addEventListener("click", () => openMoodEditor(date));
+          grid.appendChild(button);
+        }
+      };
+      renderCalendar(els.calendarGrid, els.calendarTitle);
+      renderCalendar(els.mobileCalendarGrid, els.mobileCalendarTitle);
 
       const currentWords = current ? entryWordCount(current) : 0;
       const monthEntries = activeEntries.filter(e => e.date?.startsWith(`${y}-${String(m + 1).padStart(2, "0")}`)).length;
@@ -2744,6 +2857,71 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       renderQaDirectoryPage();
     }
 
+
+    function mobilePreviewText(entry) {
+      if (!entry) return "";
+      if (isQaEntry(entry)) {
+        const firstQuestion = Array.isArray(entry.qaPairs) && entry.qaPairs.length
+          ? contentToPlainText(entry.qaPairs[0].question || "").trim()
+          : "";
+        return firstQuestion || "还没有填写问题。";
+      }
+      const text = entryPlainText(entry).trim();
+      return text || "还没有写下正文。";
+    }
+
+    function mobilePreviewMeta(entry) {
+      const tagText = entry.tags?.length ? entry.tags.slice(0, 2).map(tag => `#${tag}`).join(" ") : "暂无标签";
+      if (isQaEntry(entry)) {
+        const qaCount = Array.isArray(entry.qaPairs) ? entry.qaPairs.length : 0;
+        return `问答日记 · ${qaCount} 组问答 · ${tagText}`;
+      }
+      return `${shortDateText(entry.date)} · ${tagText}`;
+    }
+
+    function renderMobilePreviewList(container, list, emptyText) {
+      if (!container) return;
+      container.innerHTML = "";
+      if (!list.length) {
+        container.innerHTML = `<div class="mobile-preview-empty">${escapeHtml(emptyText)}</div>`;
+        return;
+      }
+      list.slice(0, 3).forEach(entry => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `mobile-preview-card ${isQaEntry(entry) ? "mobile-preview-qa" : "mobile-preview-normal"}`;
+        card.innerHTML = `
+          <span class="mobile-preview-title">${escapeHtml(entry.title || "未命名日记")}</span>
+          <span class="mobile-preview-meta">${escapeHtml(mobilePreviewMeta(entry))}</span>
+          <span class="mobile-preview-text">${escapeHtml(mobilePreviewText(entry))}</span>
+        `;
+        card.addEventListener("click", () => {
+          currentId = entry.id;
+          activeView = isQaEntry(entry) ? "qa" : "directory";
+          selectedDate = null;
+          selectedTag = null;
+          pageMode = "home";
+          const url = new URL(window.location.href);
+          url.searchParams.delete("page");
+          window.history.pushState({ pageMode }, "", url);
+          renderAll(false);
+          showViewer();
+          openMobileDetail();
+          closeMobileTools();
+        });
+        container.appendChild(card);
+      });
+    }
+
+    function renderMobileHome() {
+      const active = nonDeletedEntries().sort(compareByManualOrder);
+      const qaEntries = active.filter(isQaEntry);
+      const normalEntries = active.filter(entry => !isQaEntry(entry));
+      if (els.mobileNormalCount) els.mobileNormalCount.textContent = `${normalEntries.length} 篇`;
+      renderMobilePreviewList(els.mobileQaPreviewList, qaEntries, "还没有问答日记。可以在新增日记时选择问答记录格式。");
+      renderMobilePreviewList(els.mobileNormalPreviewList, normalEntries, "还没有普通日记。点击功能面板里的新增日记开始记录。");
+    }
+
     function renderAll(closePanels = true) {
       renderAnnouncement();
       renderThinking();
@@ -2751,6 +2929,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       renderQaDirectoryPage();
       renderViewer();
       renderWidgets();
+      renderMobileHome();
       if (pageMode === "qa-directory") {
         showQaDirectoryPage();
       } else if (closePanels) {
@@ -3114,6 +3293,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     els.newBtn.addEventListener("click", () => createEntry());
     if (els.trashBtn) els.trashBtn.addEventListener("click", () => setActiveView("trash"));
     if (els.qaDirectoryBtn) els.qaDirectoryBtn.addEventListener("click", () => setRoutePage("qa-directory"));
+    if (els.mobileQaAllBtn) els.mobileQaAllBtn.addEventListener("click", () => setRoutePage("qa-directory"));
     if (els.qaPageBackBtn) els.qaPageBackBtn.addEventListener("click", () => setRoutePage("home"));
     if (els.qaPageSortBtn) els.qaPageSortBtn.addEventListener("click", () => { qaSortMode = !qaSortMode; renderQaDirectoryPage(); showToast(qaSortMode ? "已开启问答记录排序" : "已完成排序"); });
     if (els.qaPageNewBtn) els.qaPageNewBtn.addEventListener("click", () => createEntry(null, "qa"));
