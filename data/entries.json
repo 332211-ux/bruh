@@ -280,10 +280,10 @@
       "format": "normal",
       "qaPairs": [],
       "favorite": false,
-      "deleted": false,
+      "deleted": true,
       "order": 12,
       "createdAt": "2026-06-25T12:33:33.829Z",
-      "updatedAt": "2026-06-29T02:31:20.422Z"
+      "updatedAt": "2026-06-30T15:31:52.543Z"
     },
     {
       "id": "entry-2026-06-26-1782440827419",
@@ -352,10 +352,10 @@
       "format": "normal",
       "qaPairs": [],
       "favorite": false,
-      "deleted": false,
+      "deleted": true,
       "order": 15,
       "createdAt": "2026-06-29T04:56:21.531Z",
-      "updatedAt": "2026-06-29T14:52:52.781Z"
+      "updatedAt": "2026-06-30T15:26:05.703Z"
     },
     {
       "id": "entry-2026-06-28-1782638293443",
