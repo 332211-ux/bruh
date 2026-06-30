@@ -195,10 +195,10 @@
         }
       ],
       "favorite": false,
-      "deleted": false,
+      "deleted": true,
       "order": 8,
       "createdAt": "2026-06-24T11:13:10.176Z",
-      "updatedAt": "2026-06-29T04:16:20.729Z"
+      "updatedAt": "2026-06-30T09:23:10.736Z"
     },
     {
       "id": "entry-2026-06-26-1782440827419",
