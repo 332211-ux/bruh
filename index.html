@@ -754,6 +754,18 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   .calendar-grid { gap: 4px; }
 }
 
+/* Calendar controls and mobile scroll stability patch */
+.calendar-month-controls { display:inline-flex; align-items:center; justify-content:center; gap: 6px; }
+.calendar-month-controls button { width:32px; height:32px; min-width:32px; min-height:32px; padding:0; border-radius:999px; font-size:18px; line-height:1; }
+.calendar-month-controls .mini-muted, .calendar-month-controls .mobile-section-count { min-width: 76px; text-align:center; }
+@media (max-width: 900px) {
+  html { scroll-behavior: auto !important; overflow-anchor: none; }
+  body { overscroll-behavior-y: none; overflow-anchor: none; }
+  .topbar { position: relative !important; top: auto !important; }
+  .mobile-home-section { animation: none !important; }
+  .mobile-calendar-section .mobile-section-head { align-items:center; }
+  .mobile-calendar-section .calendar-month-controls button { width:34px; height:34px; min-width:34px; min-height:34px; }
+}
 
 /* Mobile drawer visibility patch: make the function panel use the full viewport, including iOS Safari. */
 @media (max-width: 900px) {
@@ -839,7 +851,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   }
 }
 
-  </style>
+  
+/* Mobile scroll jitter fix: avoid fixing body position, which makes iOS jump back while scrolling. */
+@media (max-width: 900px) {
+  body.mobile-tools-open { position: static !important; overflow: hidden !important; }
+  .topbar { position: relative !important; top: auto !important; }
+}
+
+</style>
 </head>
 <body>
   <div class="app-shell">
@@ -901,7 +920,11 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
                 <p class="mobile-section-kicker">Mood Calendar</p>
                 <h2>日历</h2>
               </div>
-              <span id="mobileCalendarTitle" class="mobile-section-count">—</span>
+              <div class="calendar-month-controls" aria-label="切换日历月份">
+                <button id="mobileCalendarPrevBtn" type="button" aria-label="上个月">‹</button>
+                <span id="mobileCalendarTitle" class="mobile-section-count">—</span>
+                <button id="mobileCalendarNextBtn" type="button" aria-label="下个月">›</button>
+              </div>
             </div>
             <div id="mobileCalendarGrid" class="calendar-grid mobile-calendar-grid"></div>
           </section>
@@ -968,7 +991,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
             <span id="entryFooterLeft">公开访问者只能阅读</span>
             <span id="entryFooterRight">—</span>
           </div>
-          <p class="small-note">你本人在“同步设置”中填入 Token 后，点击保存会直接更新仓库里的 <code>data/entries.json</code>。</p>
+          <p class="small-note">你本人在“同步设置”中填入 Token 后，点击保存会更新索引文件 <code>data/entries.json</code>，每篇日记正文会分别保存到 <code>data/entries/</code> 目录。</p>
         </section>
 
         <section id="qaDirectoryPage" class="qa-page content-card" aria-label="问答记录目录">
@@ -1088,7 +1111,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
             <b>Token 权限建议</b><br />
             选择 Fine-grained token，只授权这个日记仓库；Repository permissions 里给 <code>Contents</code> 开 <code>Read and write</code>。不要把 Token 写进 HTML，也不要发给别人。<br /><br />
             <b>仓库结构</b><br />
-            <code>index.html</code> 放网站页面，<code>data/entries.json</code> 放日记数据。GitHub Pages 开启后，别人访问网页即可查看。
+            <code>index.html</code> 放网站页面，<code>data/entries.json</code> 放目录索引，<code>data/entries/</code> 放每篇日记正文。GitHub Pages 开启后，别人访问网页即可查看。
           </div>
         </section>
       </main>
@@ -1112,7 +1135,11 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         <section class="widget">
           <div class="widget-head">
             <h3 class="widget-title">日历</h3>
-            <span id="calendarTitle" class="mini-muted">—</span>
+            <div class="calendar-month-controls" aria-label="切换日历月份">
+              <button id="calendarPrevBtn" type="button" aria-label="上个月">‹</button>
+              <span id="calendarTitle" class="mini-muted">—</span>
+              <button id="calendarNextBtn" type="button" aria-label="下个月">›</button>
+            </div>
           </div>
           <div id="calendarGrid" class="calendar-grid"></div>
         </section>
@@ -1184,6 +1211,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
   <script>
     const DEFAULT_DATA_PATH = "data/entries.json";
+    const ENTRY_FILE_DIR = "data/entries";
+    const DATA_SCHEMA_VERSION = 4;
     const CONFIG_KEY = "diary_github_config_v2";
     const TOKEN_SESSION_KEY = "diary_github_token_session_v2";
     const TOKEN_LOCAL_KEY = "diary_github_token_local_v2";
@@ -1211,6 +1240,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     let selectedDate = null;
     let selectedTag = null;
     let selectedMoodDate = null;
+    let calendarFocusDate = new Date().toISOString().slice(0, 10);
     let config = { owner: "", repo: "", branch: "main", path: DEFAULT_DATA_PATH };
     let remoteSha = null;
     let isSaving = false;
@@ -1297,6 +1327,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       tagCountNav: document.getElementById("tagCountNav"),
       calendarTitle: document.getElementById("calendarTitle"),
       calendarGrid: document.getElementById("calendarGrid"),
+      calendarPrevBtn: document.getElementById("calendarPrevBtn"),
+      calendarNextBtn: document.getElementById("calendarNextBtn"),
       todayWords: document.getElementById("todayWords"),
       monthCount: document.getElementById("monthCount"),
       tagCloud: document.getElementById("tagCloud"),
@@ -1307,6 +1339,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       mobileNormalCount: document.getElementById("mobileNormalCount"),
       mobileQaAllBtn: document.getElementById("mobileQaAllBtn"),
       mobileCalendarTitle: document.getElementById("mobileCalendarTitle"),
+      mobileCalendarPrevBtn: document.getElementById("mobileCalendarPrevBtn"),
+      mobileCalendarNextBtn: document.getElementById("mobileCalendarNextBtn"),
       mobileCalendarGrid: document.getElementById("mobileCalendarGrid"),
       newBtn: document.getElementById("newBtn"),
       trashBtn: document.getElementById("trashBtn"),
@@ -1466,10 +1500,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
     function serializeDiaryData() {
       return {
+        version: DATA_SCHEMA_VERSION,
+        storage: "full-backup",
         announcement: normalizeAnnouncement(announcement),
         thinking: normalizeThinking(thinking),
         moods: normalizeMoods(moods),
-        entries: sortedEntries(true)
+        entries: sortedEntries(true).map(serializeEntryFile)
       };
     }
 
@@ -1496,6 +1532,59 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return out;
     }
 
+    function safeFileSlug(value = "entry") {
+      return String(value || "entry")
+        .trim()
+        .replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80) || "entry";
+    }
+
+    function entryFilePathFromId(id) {
+      return `${ENTRY_FILE_DIR}/${safeFileSlug(id || `entry-${Date.now()}`)}.json`;
+    }
+
+    function ensureEntryFilePath(entry) {
+      if (!entry) return "";
+      entry.filePath = String(entry.filePath || entry.path || entry.file || entryFilePathFromId(entry.id)).replace(/^\/+/, "");
+      return entry.filePath;
+    }
+
+    function serializeEntryFile(entry) {
+      const clean = { ...entry };
+      delete clean._needsFileSave;
+      return clean;
+    }
+
+    function serializeEntryMeta(entry) {
+      ensureEntryFilePath(entry);
+      return {
+        id: entry.id,
+        filePath: entry.filePath,
+        date: entry.date,
+        title: entry.title,
+        tags: Array.isArray(entry.tags) ? entry.tags : [],
+        format: entry.format || "normal",
+        favorite: Boolean(entry.favorite),
+        deleted: Boolean(entry.deleted),
+        order: Number.isFinite(Number(entry.order)) ? Number(entry.order) : nextEntryOrder(),
+        createdAt: entry.createdAt || "",
+        updatedAt: entry.updatedAt || ""
+      };
+    }
+
+    function serializeManifestData() {
+      return {
+        version: DATA_SCHEMA_VERSION,
+        storage: "split-files",
+        entryDir: ENTRY_FILE_DIR,
+        announcement: normalizeAnnouncement(announcement),
+        thinking: normalizeThinking(thinking),
+        moods: normalizeMoods(moods),
+        entries: sortedEntries(true).map(serializeEntryMeta)
+      };
+    }
+
     function nextEntryOrder() {
       const orders = entries.map(item => Number(item.order)).filter(Number.isFinite);
       return orders.length ? Math.max(...orders) + 1 : 1;
@@ -1505,8 +1594,13 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return (Array.isArray(list) ? list : []).map((item, index) => {
         const qaPairs = normalizeQaPairs(item.qaPairs || item.qa_pairs || item.questions || []);
         const format = item.format === "qa" || qaPairs.length ? "qa" : "normal";
+        const id = item.id || `entry-${Date.now()}-${index}`;
+        const filePath = String(item.filePath || item.path || item.file || entryFilePathFromId(id)).replace(/^\/+/, "");
+        const hasInlineBody = Boolean(item.content || qaPairs.length);
+        const hasFileRef = Boolean(item.filePath || item.path || item.file);
         return {
-          id: item.id || `entry-${Date.now()}-${index}`,
+          id,
+          filePath,
           date: item.date || new Date().toISOString().slice(0, 10),
           title: item.title || "未命名日记",
           tags: Array.isArray(item.tags) ? item.tags : String(item.tags || "").split(/[,，]/).map(t => t.trim()).filter(Boolean),
@@ -1517,7 +1611,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           deleted: Boolean(item.deleted),
           order: Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1,
           createdAt: normalizeCreatedAt(item, index),
-          updatedAt: item.updatedAt || ""
+          updatedAt: item.updatedAt || "",
+          _needsFileSave: hasInlineBody && !hasFileRef
         };
       });
     }
@@ -2202,15 +2297,44 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (els.cloudTopInfo) els.cloudTopInfo.textContent = label;
     }
 
+    async function fetchJsonNoStore(path) {
+      const clean = String(path || "").replace(/^\/+/, "");
+      const res = await fetch(`${clean}?t=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`读取失败：${res.status}`);
+      return await res.json();
+    }
+
+    async function hydrateEntryFiles(metaEntries = []) {
+      const hydrated = await Promise.all(metaEntries.map(async (meta) => {
+        ensureEntryFilePath(meta);
+        const needsFetch = Boolean(meta.filePath) && !meta.content && !(Array.isArray(meta.qaPairs) && meta.qaPairs.length);
+        if (!needsFetch) return meta;
+        try {
+          const fileData = await fetchJsonNoStore(meta.filePath);
+          const merged = normalizeEntries([{ ...fileData, ...meta, content: fileData.content || "", qaPairs: fileData.qaPairs || fileData.qa_pairs || fileData.questions || [] }])[0];
+          merged._needsFileSave = false;
+          return merged;
+        } catch (err) {
+          console.warn("日记文件读取失败，已保留目录信息：", meta.filePath, err);
+          meta._needsFileSave = false;
+          return meta;
+        }
+      }));
+      return hydrated;
+    }
+
     async function loadEntriesFromRemote() {
       const path = (config.path || DEFAULT_DATA_PATH).replace(/^\/+/, "");
-      const url = `${path}?t=${Date.now()}`;
       try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`读取失败：${res.status}`);
-        const data = await res.json();
+        let data;
+        try {
+          data = await fetchJsonNoStore(path);
+        } catch (err) {
+          if (path !== "data/entries.json") data = await fetchJsonNoStore("data/entries.json");
+          else throw err;
+        }
         const normalized = normalizeDiaryData(data);
-        entries = normalized.entries;
+        entries = await hydrateEntryFiles(normalized.entries);
         moods = normalized.moods || {};
         announcement = normalized.announcement;
         thinking = normalized.thinking || defaultThinking();
@@ -2218,7 +2342,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
         saveBackup();
         renderAll();
-        renderCloudStatus(null, `已读取 ${path}。${hasGithubConfig() ? `${config.owner}/${config.repo}` : "还未填写 GitHub 设置。"}`);
+        renderCloudStatus(null, `已读取 ${path}。当前为分文件结构：目录索引 + 每篇日记独立文件。`);
       } catch (err) {
         const backup = localStorage.getItem(BACKUP_KEY);
         if (backup) {
@@ -2230,7 +2354,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
             thinking = normalized.thinking || defaultThinking();
             currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
             renderAll();
-            renderCloudStatus("error", "云端数据暂时读取失败，已显示本机备份。部署后请确认 data/entries.json 存在。");
+            renderCloudStatus("error", "云端数据暂时读取失败，已显示本机备份。部署后请确认目录索引和日记文件存在。");
             return;
           } catch (_) {}
         }
@@ -2241,7 +2365,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         thinking = normalized.thinking || defaultThinking();
         currentId = getEntriesForActiveView().sort(compareByManualOrder)[0]?.id || sortedEntries()[0]?.id || null;
         renderAll();
-        renderCloudStatus("error", "未读取到 data/entries.json，已显示示例数据。");
+        renderCloudStatus("error", "未读取到线上数据，已显示示例数据。首次保存后会创建目录索引和独立日记文件。");
       }
     }
 
@@ -2613,7 +2737,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     function renderWidgets() {
       const sorted = sortedEntries();
       const current = getCurrentEntry() || sorted[0] || null;
-      const refDate = selectedDate || current?.date || new Date().toISOString().slice(0, 10);
+      const refDate = calendarFocusDate || selectedMoodDate || selectedDate || current?.date || new Date().toISOString().slice(0, 10);
+      const selectedCalendarDate = selectedMoodDate || selectedDate || current?.date || new Date().toISOString().slice(0, 10);
       const ref = new Date(`${refDate}T00:00:00`);
       const y = ref.getFullYear();
       const m = ref.getMonth();
@@ -2647,7 +2772,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           button.title = mood ? `${date}｜心情：${mood}。点击修改心情` : `${date}｜点击添加心情`;
           button.className = [
             "calendar-day",
-            date === refDate ? "today selected" : "",
+            date === selectedCalendarDate ? "today selected" : "",
             mood ? "has-entry has-mood" : (hasDiary ? "has-entry" : "no-entry")
           ].filter(Boolean).join(" ");
           button.addEventListener("click", () => openMoodEditor(date));
@@ -2711,8 +2836,17 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       }
     }
 
+    function changeCalendarMonth(delta) {
+      const base = new Date(`${calendarFocusDate || new Date().toISOString().slice(0, 10)}T00:00:00`);
+      base.setMonth(base.getMonth() + delta, 1);
+      calendarFocusDate = base.toISOString().slice(0, 10);
+      renderWidgets();
+    }
+
     function openMoodEditor(date = new Date().toISOString().slice(0, 10)) {
       selectedMoodDate = date;
+      calendarFocusDate = date;
+      renderWidgets();
       selectedDate = date;
       if (els.moodModalTitle) els.moodModalTitle.textContent = `修改 ${date} 的心情`;
       if (els.moodDateInput) els.moodDateInput.value = date;
@@ -2997,7 +3131,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       els.saveBtn.textContent = canSync ? "保存到 GitHub" : "✓ 保存本机草稿";
       els.editorNotice.className = canSync ? "editor-notice ok" : "editor-notice";
       els.editorNotice.innerHTML = canSync
-        ? `已连接 GitHub。点击保存会更新 <code>${escapeHtml(config.path)}</code>，别人刷新公开页面后即可看到。`
+        ? `已连接 GitHub。点击保存会更新当前日记文件和索引 <code>${escapeHtml(config.path)}</code>，别人刷新公开页面后即可看到。`
         : `现在可以编辑，但还没有完整的 GitHub 设置或 Token。点击保存会先保存到本机浏览器；要让别人在线看到，请点左侧“设置”填入 Owner、Repository 和 Token。`;
     }
 
@@ -3018,6 +3152,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+      entry.filePath = entryFilePathFromId(entry.id);
+      entry._needsFileSave = true;
       entries.push(entry);
       currentId = entry.id;
       pageMode = "home";
@@ -3074,8 +3210,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return btoa(binary);
     }
 
-    async function getGithubFile(token) {
-      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(config.path)}?ref=${encodeURIComponent(config.branch)}`;
+    async function getGithubFile(token, path = config.path) {
+      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(path)}?ref=${encodeURIComponent(config.branch)}`;
       const res = await fetch(url, { headers: githubHeaders(token) });
       if (res.status === 404) return null;
       if (!res.ok) {
@@ -3085,16 +3221,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return await res.json();
     }
 
-    async function putGithubFile(token, sha) {
-      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(config.path)}`;
-      const content = JSON.stringify(serializeDiaryData(), null, 2) + "\n";
+    async function putGithubTextFile(token, path, text, message, sha = null) {
+      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(path)}`;
       const body = {
-        message: `Update diary entries ${new Date().toISOString().slice(0, 19).replace("T", " ")}`,
-        content: toBase64Utf8(content),
+        message,
+        content: toBase64Utf8(text),
         branch: config.branch
       };
       if (sha) body.sha = sha;
-
       const res = await fetch(url, {
         method: "PUT",
         headers: { ...githubHeaders(token), "Content-Type": "application/json" },
@@ -3107,11 +3241,45 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return await res.json();
     }
 
+    async function putGithubFile(token, sha) {
+      const content = JSON.stringify(serializeManifestData(), null, 2) + "\n";
+      return await putGithubTextFile(token, config.path, content, `Update diary index ${new Date().toISOString().slice(0, 19).replace("T", " ")}`, sha);
+    }
+
+    async function putEntryFile(token, entry) {
+      ensureEntryFilePath(entry);
+      const file = await getGithubFile(token, entry.filePath);
+      const content = JSON.stringify(serializeEntryFile(entry), null, 2) + "\n";
+      const result = await putGithubTextFile(token, entry.filePath, content, `Update diary file ${entry.title || entry.id}`, file?.sha || null);
+      entry._needsFileSave = false;
+      return result;
+    }
+
+    async function deleteGithubFileByPath(token, path) {
+      const file = await getGithubFile(token, path);
+      if (!file?.sha) return null;
+      const url = `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/${githubApiPath(path)}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: { ...githubHeaders(token), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `Delete diary file ${path}`,
+          sha: file.sha,
+          branch: config.branch
+        })
+      });
+      if (!res.ok) {
+        const detail = await safeJson(res);
+        throw new Error(detail.message || `GitHub 删除文件失败：${res.status}`);
+      }
+      return await res.json();
+    }
+
     async function safeJson(res) {
       try { return await res.json(); } catch (_) { return {}; }
     }
 
-    async function saveEntriesToGithub() {
+    async function saveEntriesToGithub(options = {}) {
       if (isSaving) return;
       if (!hasGithubConfig() || !getToken()) {
         showToast("先配置 GitHub 仓库和 Token");
@@ -3119,23 +3287,35 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         return;
       }
       isSaving = true;
-      els.saveBtn.disabled = true;
+      if (els.saveBtn) els.saveBtn.disabled = true;
       renderCloudStatus("saving", "正在提交到 GitHub……");
       try {
         const token = getToken();
-        const file = await getGithubFile(token);
-        const result = await putGithubFile(token, file?.sha || remoteSha || null);
+        if (options.deleteFilePath) {
+          await deleteGithubFileByPath(token, options.deleteFilePath);
+        }
+        const targetId = options.entryId || null;
+        const filesToSave = entries.filter(entry => {
+          ensureEntryFilePath(entry);
+          return entry._needsFileSave || (targetId && entry.id === targetId);
+        });
+        for (const entry of filesToSave) {
+          await putEntryFile(token, entry);
+        }
+        const manifest = await getGithubFile(token, config.path);
+        const result = await putGithubFile(token, manifest?.sha || remoteSha || null);
         remoteSha = result.content?.sha || null;
+        saveBackup();
         renderAll();
-        renderCloudStatus(null, "已保存到 GitHub。GitHub Pages 页面可能需要稍等片刻刷新。");
-        showToast("已保存到 GitHub");
+        renderCloudStatus(null, filesToSave.length ? `已保存目录索引和 ${filesToSave.length} 个日记文件。` : "已保存目录索引到 GitHub。");
+        showToast(filesToSave.length ? "已保存日记文件和索引" : "已保存索引");
       } catch (err) {
         console.error(err);
         renderCloudStatus("error", err.message || "保存失败，请检查 Token 和仓库权限。");
         alert(`保存失败：${err.message || err}`);
       } finally {
         isSaving = false;
-        els.saveBtn.disabled = false;
+        if (els.saveBtn) els.saveBtn.disabled = false;
       }
     }
 
@@ -3147,7 +3327,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         showToast("已保存本机草稿，尚未同步到线上");
         return;
       }
-      await saveEntriesToGithub();
+      const entry = getCurrentEntry();
+      await saveEntriesToGithub({ entryId: entry?.id });
     }
 
     async function deleteCurrentEntry() {
@@ -3155,11 +3336,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       if (!entry) return;
       if (entry.deleted) {
         if (!confirm(`确定彻底删除《${entry.title}》吗？这个操作不可恢复。`)) return;
+        const deletePath = entry.filePath;
         entries = entries.filter(item => item.id !== entry.id);
         currentId = getEntriesForActiveView()[0]?.id || sortedEntries()[0]?.id || null;
         saveBackup();
         renderAll();
-        if (hasGithubConfig() && getToken()) await saveEntriesToGithub();
+        if (hasGithubConfig() && getToken()) await saveEntriesToGithub({ deleteFilePath: deletePath });
         else showToast("已彻底删除本机数据；如需同步请保存到 GitHub");
         return;
       }
@@ -3187,13 +3369,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         return;
       }
       if (!confirm(`确定彻底删除《${entry.title}》吗？这个操作不可恢复。`)) return;
+      const deletePath = entry.filePath;
       entries = entries.filter(item => item.id !== entry.id);
       const next = getEntriesForActiveView()[0] || sortedEntries()[0] || null;
       currentId = next ? next.id : null;
       saveBackup();
       renderAll();
       if (hasGithubConfig() && getToken()) {
-        await saveEntriesToGithub();
+        await saveEntriesToGithub({ deleteFilePath: deletePath });
       } else {
         showToast("已彻底删除本机数据；如需同步请保存到 GitHub");
       }
@@ -3341,6 +3524,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     if (els.moodModal) els.moodModal.addEventListener("click", (event) => {
       if (event.target === els.moodModal) closeMoodEditor();
     });
+    if (els.calendarPrevBtn) els.calendarPrevBtn.addEventListener("click", () => changeCalendarMonth(-1));
+    if (els.calendarNextBtn) els.calendarNextBtn.addEventListener("click", () => changeCalendarMonth(1));
+    if (els.mobileCalendarPrevBtn) els.mobileCalendarPrevBtn.addEventListener("click", () => changeCalendarMonth(-1));
+    if (els.mobileCalendarNextBtn) els.mobileCalendarNextBtn.addEventListener("click", () => changeCalendarMonth(1));
     if (els.mobileBackBtn) els.mobileBackBtn.addEventListener("click", closeMobileDetail);
     if (els.mobileToolsBtn) els.mobileToolsBtn.addEventListener("click", openMobileTools);
     if (els.mobileToolsBtnSide) els.mobileToolsBtnSide.addEventListener("click", openMobileTools);
