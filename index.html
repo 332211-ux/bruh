@@ -441,7 +441,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   border: 1px solid rgba(148,163,184,.16);
   box-shadow: 0 12px 24px rgba(18,38,76,.05);
 }
-.qa-block-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.qa-block-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+.qa-block-title { font-weight: 950; color: var(--ink); }
+.qa-block-actions { display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
+.qa-block-actions button { min-height: 32px; padding: 5px 10px; font-size: 12px; }
 .qa-remove-btn { min-height: 32px; padding: 5px 10px; font-size: 12px; }
 .qa-grid { display: grid; gap: 12px; }
 .qa-rich-editor { min-height: 130px; border-radius: 20px; }
@@ -1237,6 +1240,8 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     let pageMode = new URLSearchParams(window.location.search).get("page") === "qa" ? "qa-directory" : "home";
     let sortMode = false;
     let qaSortMode = false;
+    let sortDirty = false;
+    let qaSortDirty = false;
     let selectedDate = null;
     let selectedTag = null;
     let selectedMoodDate = null;
@@ -2192,8 +2197,12 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       block.className = "qa-block";
       block.innerHTML = `
         <div class="qa-block-head">
-          <span>问答 ${index + 1}</span>
-          <button type="button" class="danger qa-remove-btn">删除这一组</button>
+          <span class="qa-block-title">问答 ${index + 1}</span>
+          <div class="qa-block-actions">
+            <button type="button" class="qa-move-btn" data-qa-move="up">上移</button>
+            <button type="button" class="qa-move-btn" data-qa-move="down">下移</button>
+            <button type="button" class="danger qa-remove-btn">删除这一组</button>
+          </div>
         </div>
         <div class="qa-grid">
           <label><span>我问的问题</span><div class="rich-editor qa-rich-editor qa-question-input" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="写下你的问题……"></div></label>
@@ -2206,6 +2215,11 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       answerInput.innerHTML = contentToHtml(pair.answer || "");
       bindRichEditor(questionInput);
       bindRichEditor(answerInput);
+      block.querySelectorAll("[data-qa-move]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          moveQaBlock(block, btn.dataset.qaMove);
+        });
+      });
       block.querySelector(".qa-remove-btn").addEventListener("click", () => {
         block.remove();
         refreshQaBlockNumbers();
@@ -2216,9 +2230,27 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
     function refreshQaBlockNumbers() {
       if (!els.qaList) return;
-      [...els.qaList.querySelectorAll(".qa-block-head span")].forEach((span, index) => {
-        span.textContent = `问答 ${index + 1}`;
+      const blocks = [...els.qaList.querySelectorAll(".qa-block")];
+      blocks.forEach((block, index) => {
+        const title = block.querySelector(".qa-block-title");
+        if (title) title.textContent = `问答 ${index + 1}`;
+        const upBtn = block.querySelector('[data-qa-move="up"]');
+        const downBtn = block.querySelector('[data-qa-move="down"]');
+        if (upBtn) upBtn.disabled = index === 0;
+        if (downBtn) downBtn.disabled = index === blocks.length - 1;
       });
+    }
+
+    function moveQaBlock(block, direction) {
+      if (!els.qaList || !block) return;
+      if (direction === "up" && block.previousElementSibling) {
+        els.qaList.insertBefore(block, block.previousElementSibling);
+      } else if (direction === "down" && block.nextElementSibling) {
+        els.qaList.insertBefore(block.nextElementSibling, block);
+      }
+      refreshQaBlockNumbers();
+      block.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      showToast("已调整这一组问答顺序，保存日记后生效");
     }
 
     function addQaBlock(pair = { question: "", answer: "" }) {
@@ -2898,6 +2930,21 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       openMoodEditor(date);
     }
 
+    function markSortDirty() {
+      if (pageMode === "qa-directory") qaSortDirty = true;
+      else sortDirty = true;
+    }
+
+    async function persistSortChanges(label = "目录顺序") {
+      saveBackup();
+      if (hasGithubConfig() && getToken()) {
+        await saveEntriesToGithub();
+      } else {
+        renderCloudStatus(null, `${label}已保存到本机；配置 GitHub 后可同步到线上。`);
+        showToast(`${label}已保存到本机，尚未同步 GitHub`);
+      }
+    }
+
     async function moveEntry(id, direction) {
       const visible = (pageMode === "qa-directory" ? nonDeletedEntries().filter(isQaEntry) : getEntriesForActiveView()).sort(compareByManualOrder);
       const index = visible.findIndex(entry => entry.id === id);
@@ -2911,10 +2958,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       b.order = temp;
       reorderAllEntries();
       currentId = id;
+      markSortDirty();
       saveBackup();
       renderAll(false);
-      showToast(direction === "up" ? "已上移" : "已下移");
-      if (hasGithubConfig() && getToken()) await saveEntriesToGithub();
+      showToast(direction === "up" ? "已上移，点完成后再保存顺序" : "已下移，点完成后再保存顺序");
     }
 
     function setRoutePage(nextMode, options = {}) {
@@ -3492,9 +3539,37 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     if (els.qaDirectoryBtn) els.qaDirectoryBtn.addEventListener("click", () => setRoutePage("qa-directory"));
     if (els.mobileQaAllBtn) els.mobileQaAllBtn.addEventListener("click", () => setRoutePage("qa-directory"));
     if (els.qaPageBackBtn) els.qaPageBackBtn.addEventListener("click", () => setRoutePage("home"));
-    if (els.qaPageSortBtn) els.qaPageSortBtn.addEventListener("click", () => { qaSortMode = !qaSortMode; renderQaDirectoryPage(); showToast(qaSortMode ? "已开启问答记录排序" : "已完成排序"); });
+    if (els.qaPageSortBtn) els.qaPageSortBtn.addEventListener("click", async () => {
+      const wasSorting = qaSortMode;
+      qaSortMode = !qaSortMode;
+      renderQaDirectoryPage();
+      if (wasSorting) {
+        if (qaSortDirty) {
+          qaSortDirty = false;
+          await persistSortChanges("问答记录顺序");
+        } else {
+          showToast("已完成排序，顺序没有变化");
+        }
+      } else {
+        showToast("已开启问答记录排序，全部调完后再点完成保存");
+      }
+    });
     if (els.qaPageNewBtn) els.qaPageNewBtn.addEventListener("click", () => createEntry(null, "qa"));
-    if (els.sortToggleBtn) els.sortToggleBtn.addEventListener("click", () => { sortMode = !sortMode; renderList(); showToast(sortMode ? "已开启排序，使用上移/下移调整目录" : "已完成排序"); });
+    if (els.sortToggleBtn) els.sortToggleBtn.addEventListener("click", async () => {
+      const wasSorting = sortMode;
+      sortMode = !sortMode;
+      renderList();
+      if (wasSorting) {
+        if (sortDirty) {
+          sortDirty = false;
+          await persistSortChanges("普通日记顺序");
+        } else {
+          showToast("已完成排序，顺序没有变化");
+        }
+      } else {
+        showToast("已开启排序，全部调完后再点完成保存");
+      }
+    });
     els.quickNewBtn.addEventListener("click", () => createEntry());
     if (els.emptyNewBtn) els.emptyNewBtn.addEventListener("click", () => createEntry(activeView === "date" ? selectedDate : null));
     els.refreshBtn.addEventListener("click", loadEntriesFromRemote);
