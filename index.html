@@ -1240,7 +1240,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     let selectedDate = null;
     let selectedTag = null;
     let selectedMoodDate = null;
-    let calendarFocusDate = new Date().toISOString().slice(0, 10);
+    let calendarFocusDate = localDateString();
     let config = { owner: "", repo: "", branch: "main", path: DEFAULT_DATA_PATH };
     let remoteSha = null;
     let isSaving = false;
@@ -1601,7 +1601,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         return {
           id,
           filePath,
-          date: item.date || new Date().toISOString().slice(0, 10),
+          date: item.date || localDateString(),
           title: item.title || "未命名日记",
           tags: Array.isArray(item.tags) ? item.tags : String(item.tags || "").split(/[,，]/).map(t => t.trim()).filter(Boolean),
           content: item.content || "",
@@ -1692,16 +1692,29 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return entries.find(entry => entry.id === currentId) || null;
     }
 
+    function localDateString(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function localDateFromYmd(date = "") {
+      const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return new Date();
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+
     function dateText(date) {
       if (!date) return "未填写日期";
-      const d = new Date(`${date}T00:00:00`);
+      const d = localDateFromYmd(date);
       if (Number.isNaN(d.getTime())) return date;
       return d.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "long" });
     }
 
     function shortDateText(date) {
       if (!date) return "—";
-      const d = new Date(`${date}T00:00:00`);
+      const d = localDateFromYmd(date);
       if (Number.isNaN(d.getTime())) return date;
       return d.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit", weekday: "short" });
     }
@@ -2737,9 +2750,9 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     function renderWidgets() {
       const sorted = sortedEntries();
       const current = getCurrentEntry() || sorted[0] || null;
-      const refDate = calendarFocusDate || selectedMoodDate || selectedDate || current?.date || new Date().toISOString().slice(0, 10);
-      const selectedCalendarDate = selectedMoodDate || selectedDate || current?.date || new Date().toISOString().slice(0, 10);
-      const ref = new Date(`${refDate}T00:00:00`);
+      const refDate = calendarFocusDate || selectedMoodDate || selectedDate || current?.date || localDateString();
+      const selectedCalendarDate = selectedMoodDate || selectedDate || current?.date || localDateString();
+      const ref = localDateFromYmd(refDate);
       const y = ref.getFullYear();
       const m = ref.getMonth();
       const monthStart = new Date(y, m, 1);
@@ -2837,13 +2850,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function changeCalendarMonth(delta) {
-      const base = new Date(`${calendarFocusDate || new Date().toISOString().slice(0, 10)}T00:00:00`);
-      base.setMonth(base.getMonth() + delta, 1);
-      calendarFocusDate = base.toISOString().slice(0, 10);
+      const current = localDateFromYmd(calendarFocusDate || localDateString());
+      const nextMonth = new Date(current.getFullYear(), current.getMonth() + delta, 1);
+      calendarFocusDate = localDateString(nextMonth);
+      selectedMoodDate = "";
       renderWidgets();
     }
 
-    function openMoodEditor(date = new Date().toISOString().slice(0, 10)) {
+    function openMoodEditor(date = localDateString()) {
       selectedMoodDate = date;
       calendarFocusDate = date;
       renderWidgets();
@@ -2861,7 +2875,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     async function saveCalendarMood(clear = false) {
-      const date = (els.moodDateInput?.value || selectedMoodDate || new Date().toISOString().slice(0, 10)).slice(0, 10);
+      const date = (els.moodDateInput?.value || selectedMoodDate || localDateString()).slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         showToast("请先选择正确日期");
         return;
@@ -3136,7 +3150,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function createEntry(dateOverride = null, formatOverride = null) {
-      const today = dateOverride || selectedDate || new Date().toISOString().slice(0, 10);
+      const today = dateOverride || selectedDate || localDateString();
       const entryFormat = formatOverride || (activeView === "qa" ? "qa" : "normal");
       const entry = {
         id: `entry-${today}-${Date.now()}`,
@@ -3171,7 +3185,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     function applyEditorToCurrent() {
       const entry = getCurrentEntry();
       if (!entry) return null;
-      entry.date = els.dateInput.value || new Date().toISOString().slice(0, 10);
+      entry.date = els.dateInput.value || localDateString();
       entry.title = els.titleInput.value.trim() || "未命名日记";
       entry.tags = els.tagsInput.value.split(/[,，]/).map(t => t.trim()).filter(Boolean);
       entry.format = getEditorFormat();
