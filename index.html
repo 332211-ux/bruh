@@ -740,7 +740,18 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
   .modal-panel { width: 100%; border-radius: 28px; padding: 16px; max-height: 86vh; }
 
   .mobile-home-dashboard { display: grid !important; gap: 18px; order: 1; }
-  .directory-total-nav, .thought-thread-card, .announcement-card, .section-head, .entry-list, .status { display: none !important; }
+  .directory-total-nav, .thought-thread-card, .sidebar > .announcement-card, .section-head, .entry-list, .status { display: none !important; }
+  #mobileHomeDashboard .mobile-announcement-card {
+    display: block !important;
+    padding: 18px;
+    border-radius: 30px;
+    order: -1;
+    animation: fadeUp .22s ease both;
+  }
+  #mobileHomeDashboard .mobile-announcement-card .announcement-content {
+    font-size: 15px;
+    line-height: 1.75;
+  }
   .mobile-home-section { animation: fadeUp .22s ease both; }
   .mobile-qa-section { animation-delay: .02s; }
   .mobile-normal-section { animation-delay: .06s; }
@@ -895,6 +906,15 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         </nav>
 
         <section id="mobileHomeDashboard" class="mobile-home-dashboard mobile-only" aria-label="移动端首页">
+          <section class="announcement-card mobile-announcement-card" aria-label="公告栏">
+            <div class="announcement-head">
+              <b id="mobileAnnouncementTitleView">公告栏</b>
+              <button id="mobileEditAnnouncementBtn" type="button">编辑</button>
+            </div>
+            <div id="mobileAnnouncementContentView" class="announcement-content empty">暂无公告。</div>
+            <div id="mobileAnnouncementTimeView" class="announcement-time"></div>
+          </section>
+
           <section class="mobile-home-section mobile-qa-section">
             <div class="mobile-section-head">
               <div>
@@ -1273,6 +1293,10 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       announcementTitleView: document.getElementById("announcementTitleView"),
       announcementContentView: document.getElementById("announcementContentView"),
       announcementTimeView: document.getElementById("announcementTimeView"),
+      mobileAnnouncementTitleView: document.getElementById("mobileAnnouncementTitleView"),
+      mobileAnnouncementContentView: document.getElementById("mobileAnnouncementContentView"),
+      mobileAnnouncementTimeView: document.getElementById("mobileAnnouncementTimeView"),
+      mobileEditAnnouncementBtn: document.getElementById("mobileEditAnnouncementBtn"),
       announcementModal: document.getElementById("announcementModal"),
       announcementTitleInput: document.getElementById("announcementTitleInput"),
       announcementContentInput: document.getElementById("announcementContentInput"),
@@ -2438,13 +2462,22 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       const safe = normalizeAnnouncement(announcement);
       announcement = safe;
       if (els.announcementTitleView) els.announcementTitleView.textContent = `${safe.title || "公告栏"}`;
+      if (els.mobileAnnouncementTitleView) els.mobileAnnouncementTitleView.textContent = `${safe.title || "公告栏"}`;
+      const text = String(safe.content || "").trim();
       if (els.announcementContentView) {
-        const text = String(safe.content || "").trim();
         els.announcementContentView.textContent = text || "暂无公告。";
         els.announcementContentView.classList.toggle("empty", !text);
       }
+      if (els.mobileAnnouncementContentView) {
+        els.mobileAnnouncementContentView.textContent = text || "暂无公告。";
+        els.mobileAnnouncementContentView.classList.toggle("empty", !text);
+      }
+      const timeText = safe.updatedAt ? `最后更新：${new Date(safe.updatedAt).toLocaleString("zh-CN")}` : "";
       if (els.announcementTimeView) {
-        els.announcementTimeView.textContent = safe.updatedAt ? `最后更新：${new Date(safe.updatedAt).toLocaleString("zh-CN")}` : "";
+        els.announcementTimeView.textContent = timeText;
+      }
+      if (els.mobileAnnouncementTimeView) {
+        els.mobileAnnouncementTimeView.textContent = timeText;
       }
     }
 
@@ -3593,6 +3626,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     els.testBtn.addEventListener("click", testConnection);
     els.backBtn.addEventListener("click", renderAll);
     if (els.editAnnouncementBtn) els.editAnnouncementBtn.addEventListener("click", openAnnouncementEditor);
+    if (els.mobileEditAnnouncementBtn) els.mobileEditAnnouncementBtn.addEventListener("click", openAnnouncementEditor);
     if (els.saveAnnouncementBtn) els.saveAnnouncementBtn.addEventListener("click", saveAnnouncement);
     if (els.cancelAnnouncementBtn) els.cancelAnnouncementBtn.addEventListener("click", closeAnnouncementEditor);
     if (els.cancelAnnouncementBtn2) els.cancelAnnouncementBtn2.addEventListener("click", closeAnnouncementEditor);
