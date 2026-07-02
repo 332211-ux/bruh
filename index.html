@@ -976,14 +976,6 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
           </section>
         </section>
 
-        <section class="thought-thread-card" aria-label="思考脉络">
-          <div class="thought-thread-head">
-            <b>思考脉络</b>
-            <button id="qaDirectoryBtn" class="qa-directory-link" type="button"><span>问答记录</span><span id="qaCountBadge">0</span></button>
-          </div>
-          <div id="thoughtThreadList" class="thought-thread-list"></div>
-        </section>
-
         <section class="announcement-card" aria-label="公告栏">
           <div class="announcement-head">
             <b id="announcementTitleView">公告栏</b>
@@ -995,6 +987,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
         <div class="side-actions">
           <button class="primary" id="newBtn">新增日记</button>
+          <button id="qaDirectoryBtn" type="button">问答记录 <span id="qaCountBadge" class="count">0</span></button>
           <button id="trashBtn" type="button">回收站</button>
           <button id="refreshBtn">刷新</button>
           <button id="settingsBtn">设置</button>
