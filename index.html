@@ -648,6 +648,29 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 .mobile-calendar-section .calendar-day { min-height: 52px; }
 .mobile-calendar-section .cal-pill { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
 
+
+
+/* Desktop: show left and right panels in full, no independent vertical scrolling */
+@media (min-width: 1221px) {
+  .sidebar,
+  .right-rail {
+    position: static;
+    top: auto;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+  .sidebar::-webkit-scrollbar,
+  .right-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .thought-thread-list {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
 @media (max-width: 1220px) {
   .layout { grid-template-columns: minmax(280px, 330px) minmax(500px, 1fr); }
   .right-rail { position: fixed; right: 22px; top: 104px; bottom: 22px; width: min(360px, calc(100vw - 44px)); z-index: 60; transform: translateX(calc(100% + 40px)); transition: transform .24s ease; max-height: none; padding: 0; }
