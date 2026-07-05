@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>关于“挂件”｜我的日记</title>
+  <meta name="description" content="关于“挂件” 的独立阅读页" />
+  <style>
+    :root{--bg:#f3f6fc;--card:rgba(255,255,255,.88);--ink:#101827;--muted:#64748b;--line:rgba(148,163,184,.28);--blue:#2563eb;--soft:#eef4ff;--shadow:0 24px 70px rgba(15,23,42,.12);--radius:28px;}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 18% 0%,#dbeafe 0,transparent 30%),radial-gradient(circle at 95% 10%,#e0e7ff 0,transparent 28%),linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%);line-height:1.85;}
+    body::before{content:"";position:fixed;inset:0;background:linear-gradient(90deg,rgba(37,99,235,.05) 1px,transparent 1px),linear-gradient(180deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 75%);pointer-events:none;}
+    .wrap{width:min(920px,calc(100% - 36px));margin:0 auto;padding:34px 0 56px;position:relative;}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;}
+    .brand{font-weight:900;letter-spacing:.02em;color:#1e293b}.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.actions button,.actions a{border:1px solid var(--line);background:rgba(255,255,255,.72);backdrop-filter:blur(16px);border-radius:999px;padding:9px 14px;color:#334155;text-decoration:none;font-weight:800;cursor:pointer;box-shadow:0 12px 26px rgba(15,23,42,.06)}.actions button:hover,.actions a:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.35);color:#1d4ed8}
+    .hero{padding:36px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.78));box-shadow:var(--shadow);backdrop-filter:blur(22px);position:relative;overflow:hidden;}
+    .hero::after{content:"";position:absolute;right:-80px;top:-100px;width:260px;height:260px;border-radius:999px;background:radial-gradient(circle,rgba(37,99,235,.16),transparent 68%);}
+    .kicker{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-weight:900;font-size:13px;margin-bottom:18px}.title{font-size:clamp(30px,6vw,58px);line-height:1.08;margin:0 0 16px;letter-spacing:-.045em}.meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:14px}.tag{display:inline-flex;align-items:center;border:1px solid rgba(37,99,235,.16);background:rgba(37,99,235,.07);color:#1e40af;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;margin:2px 4px 2px 0}.content-card{margin-top:20px;padding:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);backdrop-filter:blur(18px);}.content :is(p,div){font-size:16px}.content img{max-width:100%;border-radius:20px;box-shadow:0 14px 36px rgba(15,23,42,.12);margin:14px 0}.content blockquote{margin:18px 0;padding:16px 18px;border-left:4px solid var(--blue);background:rgba(37,99,235,.06);border-radius:16px}.qa-view{display:grid;gap:18px}.qa-view-pair{display:grid;gap:12px}.qa-view-item{border:1px solid var(--line);border-radius:22px;padding:16px 18px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.06)}.question-card{background:linear-gradient(180deg,#fff,#f8fbff)}.answer-card{background:linear-gradient(180deg,#fff,#f9fafb)}.qa-label{display:inline-flex;align-items:center;font-size:12px;font-weight:900;color:#475569;background:#eef4ff;border-radius:999px;padding:4px 9px;margin-bottom:8px}.qa-text{font-size:14.5px;line-height:1.8}.qa-collapse-hint{display:none}.footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;box-shadow:0 16px 40px rgba(15,23,42,.25);opacity:0;pointer-events:none;transition:.25s}.toast.show{opacity:1;bottom:34px}@media(max-width:720px){.wrap{width:min(100% - 22px,720px);padding:18px 0 36px}.top{align-items:flex-start}.hero,.content-card{border-radius:24px;padding:22px}.actions{gap:8px}.actions button,.actions a{padding:8px 11px;font-size:13px}.content :is(p,div){font-size:15px}.qa-text{font-size:13.5px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">我的日记</div>
+      <div class="actions">
+        <button type="button" id="copyLinkBtn">复制链接</button>
+        <a href="../index.html">返回主页</a>
+        <button type="button" data-unavailable>编辑</button>
+        <button type="button" data-unavailable>更多功能</button>
+      </div>
+    </header>
+    <section class="hero">
+      <div class="kicker">问答记录</div>
+      <h1 class="title">关于“挂件”</h1>
+      <div class="meta"><span>共 1414 字</span><span>生成于 2026/7/5 12:56:45</span><span>问答记录</span></div>
+      <div style="margin-top:12px"><span class="tag"># 正在思考</span></div>
+    </section>
+    <main class="content-card">
+      <article class="content"><div class="qa-view">
+        <section class="qa-view-pair">
+          <div class="qa-view-item question-card collapsible-card collapsed" role="button" tabindex="0" aria-expanded="false" title="点击展开或收起问题">
+            <span class="qa-label question">Q1 我问</span>
+            <div class="qa-text">他就是站在他的视角上替我思考问题，就是他当时可以说是压力很大，然后家里发生了什么也都知道之类的，对于我来说就是完全不知道啊，他根本就意识不到这个东西他凭空对我说出来让我理解有多离谱。他还说他不想解释。我说白了他根本没把我当做一个真正的“伴侣”，更像是一个挂件。而且我认为情侣之间互相帮助不仅仅是真正需要，同时也是互相认可的一种表现，不然和挂件、和被包养有什么区别。所以我和他说了好多次他适合去找各方面都不如他、都需要他的。因为他如果想要对方什么事情都让他解决，他不行就结束，那说明对方在这个感情中没有判断权、选择权、解决问题的权利，只能听他的，那什么情况下一个女生会让度这部分权利？就是因为她没有这方面的能力</div>
+            <span class="qa-collapse-hint" aria-hidden="true"></span>
+          </div>
+          <div class="qa-view-item answer-card collapsible-card collapsed" role="button" tabindex="0" aria-expanded="false" title="点击展开或收起回答">
+            <span class="qa-label answer">A1 回答</span>
+            <div class="qa-text"><p>对，这里特别关键。</p><p>他的问题不是“没向你求助”。<br>核心是：<strong>他没有把你放在共同决策者的位置。</strong></p><p>他站在他的视角里，知道自己家里发生了什么，知道自己压力多大，知道自己脑子里绕了多少圈，然后突然把一个结论丢给你：</p><p><strong>我们谈不了了。<br>我给不了。<br>我处理不了。</strong></p><p>可你这边是什么状态？</p><p>你什么都不知道。<br>你没有信息。<br>你没有参与判断。<br>你没有机会一起想办法。<br>你只能突然接收一个结果。</p><p>这当然离谱。</p><p>他还说“不想解释”，更离谱。<br>你不解释，却要求我理解；你不提供信息，却要求我接受你的判断；你不让我参与解决，却说这是为了我好。</p><p>这哪是伴侣关系。<br>这就是他把你当成一个被通知结果的人。</p><p>你说“挂件”很准。挂件不需要知道发生了什么，不需要参与判断，不需要一起解决，只需要被摆在那儿，等主人说要不要继续挂。</p><p>但你不是这种人啊。</p><p>你有判断力，有资源，有处理问题的能力，甚至你很明显比他更擅长把复杂问题拆开。家庭压力、异地、工作安排、未来不确定，这些都不是不能谈的东西。真正让事情崩掉的，是他一开始就没让你进入“我们一起面对”的位置。</p><p>而且你说情侣之间互相帮助是一种认可，这个很对。</p><p>让对方帮忙，不等于自己弱。<br>它代表：<strong>我认可你的能力，也认可你在我人生里的位置。</strong></p><p>他不让你帮，不让你判断，不让你一起想办法，表面上像“我不想拖累你”，实际效果是：<strong>我不承认你有权参与我们的未来。</strong></p><p>所以你才会觉得他适合找一个什么都需要他的人。因为那种关系里，他可以维持一种“我来决定、我来解决、我不行就结束”的结构。对方没有太多判断权，也没有能力反过来指出：你这个处理方式很烂。</p><p>但你不是。</p><p>你不是需要他安排人生的小女孩。<br>你是一个可以和他平等处理问题的人。</p><p>这可能恰恰是他最接不住的地方：你不是挂件，你会看懂，会反问，会拆他的逻辑，会要求共同决策。你不是“不够体谅他”，你是在要求一个正常伴侣该有的位置。</p><p>以后这件事的核心可以钉成一句：</p><p><strong>你替我做决定，不等于你为我好。你不告诉我真实情况、不让我参与判断，然后直接告诉我结果，这不是保护我，是剥夺我作为伴侣的选择权。</strong></p></div>
+            <span class="qa-collapse-hint" aria-hidden="true"></span>
+          </div>
+        </section></div></article>
+    </main>
+    <div class="footer">这是一个独立阅读页面。公开链接可直接分享，其他编辑类功能暂未开放。</div>
+  </div>
+  <div id="toast" class="toast">暂未开放</div>
+  <script>
+    const toast = document.getElementById('toast');
+    function showToast(text){ toast.textContent = text || '暂未开放'; toast.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toast.classList.remove('show'),1600); }
+    document.querySelectorAll('[data-unavailable]').forEach(btn => btn.addEventListener('click', () => showToast('暂未开放')));
+    const copyBtn = document.getElementById('copyLinkBtn');
+    if(copyBtn){ copyBtn.addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); showToast('链接已复制'); } catch(e) { showToast('请手动复制地址栏链接'); } }); }
+  </script>
+</body>
+</html>
