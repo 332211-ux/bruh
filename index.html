@@ -3818,123 +3818,77 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function buildPublicCopyHtml(data) {
-      const title = escapeHtml(data.siteTitle || "我的日记");
-      const announcementData = normalizeAnnouncement(data.announcement || {});
-      const publicEntries = Array.isArray(data.entries) ? data.entries : [];
-      const visibleEntries = publicEntries.filter(entry => entry.access === "visible");
-      const qaEntries = publicEntries.filter(entry => entry.format === "qa");
-      const normalEntries = publicEntries.filter(entry => entry.format !== "qa");
-      const startId = String(data.currentId || visibleEntries[0]?.id || "");
-      const generatedText = new Date(data.generatedAt || Date.now()).toLocaleString("zh-CN");
-      const moodsJson = JSON.stringify(data.moods || {}).replace(/</g, "\\u003c");
-      const startIdJson = JSON.stringify(startId).replace(/</g, "\\u003c");
-      const scriptClose = "<" + "/script>";
-      const entryById = new Map(publicEntries.map(entry => [String(entry.id), entry]));
-
-      const plainPreview = (entry) => {
-        if (entry.access === "blur") return "内容已模糊处理";
-        return String(entry.preview || "暂无预览").trim() || "暂无预览";
-      };
-      const metaText = (entry) => {
-        if (entry.format === "qa") return `问答记录 · ${Array.isArray(entry.qaPairs) ? entry.qaPairs.length : 0} 组问答`;
-        return `${entry.date || "未填写日期"} · 普通日记`;
-      };
-      const tagHtml = (entry) => (Array.isArray(entry.tags) && entry.tags.length)
-        ? entry.tags.map(tag => `<span>#${escapeHtml(tag)}</span>`).join("")
-        : `<span>暂无标签</span>`;
-      const cardHtml = (entry) => {
-        const locked = entry.access !== "visible";
-        return `<button class="entry-card${String(entry.id) === startId ? " active" : ""}${locked ? " locked blurred" : ""}" data-entry-id="${escapeHtml(entry.id)}" data-locked="${locked ? "1" : "0"}" type="button">
-          <span class="entry-title">${escapeHtml(entry.title || "未命名日记")}</span>
-          <span class="entry-meta">${escapeHtml(metaText(entry))}</span>
-          <span class="entry-preview">${escapeHtml(plainPreview(entry))}</span>
-          <span class="entry-tags">${tagHtml(entry)}</span>
-        </button>`;
-      };
-      const emptyHtml = (text) => `<div class="empty">${escapeHtml(text)}</div>`;
-      const contentHtmlSafe = (content, empty = "暂无内容。") => contentToHtml(content || "", empty);
-      const detailHtml = (entry) => {
-        if (entry.access !== "visible") return "";
-        let body = "";
-        if (entry.format === "qa") {
-          const pairs = normalizeQaPairs(entry.qaPairs || []);
-          body = pairs.length ? `<div class="qa-list">${pairs.map((pair, index) => `
-            <section class="qa-pair">
-              <div class="qa-box question"><span class="qa-label">Q${index + 1} 我问</span><div class="article small">${contentHtmlSafe(pair.question, "未填写问题")}</div></div>
-              <div class="qa-box answer"><span class="qa-label answer-label">A${index + 1} 回答</span><div class="article small">${contentHtmlSafe(pair.answer, "未填写答案")}</div></div>
-            </section>`).join("")}</div>` : `<div class="empty">暂无问答内容。</div>`;
-        } else {
-          body = `<article class="article">${contentHtmlSafe(entry.content, "暂无内容。")}</article>`;
-        }
-        return `<section class="detail-page${String(entry.id) === startId ? " active" : ""}" id="entry-${escapeHtml(entry.id)}" data-detail-id="${escapeHtml(entry.id)}">
-          <div class="detail-head">
-            <div>
-              <span class="pill">${escapeHtml(metaText(entry))}</span>
-              <h2>${escapeHtml(entry.title || "未命名日记")}</h2>
-              <div class="detail-tags">${tagHtml(entry)}</div>
-            </div>
-            <button class="ghost" data-home type="button">返回主页</button>
-          </div>
-          ${body}
-          <div class="export-footer">共 ${entry.wordCount || 0} 字 · 导出于 ${escapeHtml(generatedText)}</div>
-        </section>`;
-      };
-
-      const qaListHtml = qaEntries.length ? qaEntries.map(cardHtml).join("") : emptyHtml("暂无问答记录。");
-      const normalListHtml = normalEntries.length ? normalEntries.map(cardHtml).join("") : emptyHtml("暂无普通日记。");
-      const detailPagesHtml = visibleEntries.map(detailHtml).join("");
-      const initialHomeActive = startId && entryById.get(startId)?.access === "visible" ? "" : " active";
-
+      const safeJson = JSON.stringify(data || {})
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
       return `<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>${title}</title>
+<title>我的日记 · 公开复制体</title>
 <style>
-:root{--bg:#f5f8fc;--card:rgba(255,255,255,.86);--ink:#0f172a;--soft:#334155;--muted:#64748b;--line:rgba(148,163,184,.24);--blue:#2563eb;--violet:#7c3aed;--shadow:0 26px 80px rgba(15,23,42,.12);--radius:28px}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 8% 0,rgba(37,99,235,.13),transparent 28%),radial-gradient(circle at 100% 8%,rgba(124,58,237,.10),transparent 25%),linear-gradient(180deg,#f8fbff,#edf3fb);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink)}button,input{font:inherit}button{cursor:pointer}.shell{max-width:1480px;margin:0 auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff;font-weight:950;box-shadow:0 16px 36px rgba(37,99,235,.25)}h1{font-size:24px;margin:0;letter-spacing:-.04em}.layout{display:grid;grid-template-columns:330px minmax(0,1fr) 330px;gap:16px;align-items:start}.panel,.detail,.side{background:var(--card);border:1px solid rgba(255,255,255,.75);box-shadow:var(--shadow);border-radius:var(--radius);backdrop-filter:blur(18px)}.panel,.side{padding:16px}.detail{min-height:calc(100vh - 118px);padding:24px}.search{width:100%;border:1px solid var(--line);background:#fff;border-radius:18px;padding:13px 14px;margin-bottom:14px;outline:none}.notice{padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(239,246,255,.95),rgba(255,255,255,.75));border:1px solid rgba(37,99,235,.12);color:var(--soft);line-height:1.7;margin-bottom:16px}.notice b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}.section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px;font-weight:950}.list{display:grid;gap:10px}.entry-card{width:100%;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.78);border-radius:24px;padding:14px;display:grid;gap:7px;color:var(--ink);transition:.18s ease}.entry-card:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(15,23,42,.08)}.entry-card.active{border-color:rgba(37,99,235,.42);box-shadow:0 14px 34px rgba(37,99,235,.10)}.entry-card.locked{cursor:not-allowed}.entry-card.blurred .entry-title,.entry-card.blurred .entry-preview{filter:blur(4px);user-select:none}.entry-title{font-weight:950;font-size:16px;line-height:1.35}.entry-meta,.entry-preview,.export-footer{font-size:12px;color:var(--muted);line-height:1.6;font-weight:700}.entry-tags,.detail-tags{display:flex;gap:6px;flex-wrap:wrap}.entry-tags span,.detail-tags span{border-radius:999px;background:rgba(37,99,235,.08);color:#2563eb;font-size:11px;font-weight:850;padding:4px 8px}.home-page,.detail-page{display:none}.home-page.active,.detail-page.active{display:block;animation:fadeIn .22s ease}.detail-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}.detail h2{margin:8px 0 8px;font-size:42px;letter-spacing:-.055em;line-height:1.08}.pill{display:inline-flex;border-radius:999px;background:rgba(37,99,235,.10);color:var(--blue);padding:7px 11px;font-size:12px;font-weight:950}.ghost{border:1px solid var(--line);background:rgba(255,255,255,.72);border-radius:16px;padding:9px 13px;font-weight:900;color:var(--soft)}.article{font-size:16px;line-height:1.9;color:var(--soft)}.article.small{font-size:14px;line-height:1.75}.article img{max-width:100%;border-radius:18px;display:block;margin:14px 0}.qa-list{display:grid;gap:16px}.qa-pair{display:grid;gap:10px}.qa-box{border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.78);padding:16px}.qa-box.answer{background:rgba(248,250,252,.88)}.qa-label{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;background:rgba(37,99,235,.10);color:var(--blue);margin-bottom:8px}.answer-label{background:rgba(226,232,240,.8);color:#334155}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{min-height:46px;border:1px solid var(--line);background:#fff;border-radius:16px;display:grid;place-items:center;padding:5px;text-align:center;overflow:hidden}.day b{font-size:12px}.day .mood{font-size:10px;color:var(--muted);font-weight:850;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.cal-head button{border:1px solid var(--line);background:#fff;border-radius:12px;width:34px;height:34px;font-weight:950}.empty{color:var(--muted);font-size:13px;padding:12px;border:1px dashed var(--line);border-radius:18px}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;background:rgba(15,23,42,.92);color:#fff;padding:11px 15px;border-radius:999px;font-weight:850;transition:.18s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@media(max-width:900px){.shell{padding:12px}.layout{display:block}.panel,.side{margin-bottom:14px}.detail{min-height:auto;padding:18px;border-radius:26px}.detail h2{font-size:32px}.detail-head{display:grid}.article{font-size:15px}.article.small{font-size:13px}.day{min-height:43px}.top{position:static}.panel{border-radius:26px}}
+:root{--bg:#f5f8fc;--card:rgba(255,255,255,.88);--ink:#0f172a;--soft:#334155;--muted:#64748b;--line:rgba(148,163,184,.24);--blue:#2563eb;--violet:#7c3aed;--shadow:0 26px 80px rgba(15,23,42,.12);--radius:28px;--danger:#ef4444}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 8% 0,rgba(37,99,235,.13),transparent 28%),radial-gradient(circle at 100% 8%,rgba(124,58,237,.10),transparent 25%),linear-gradient(180deg,#f8fbff,#edf3fb);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink)}button,input{font:inherit}button{cursor:pointer}.shell{max-width:1480px;margin:0 auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff;font-weight:950;box-shadow:0 16px 36px rgba(37,99,235,.25)}h1{font-size:24px;margin:0;letter-spacing:-.04em}.layout{display:grid;grid-template-columns:330px minmax(0,1fr) 330px;gap:16px;align-items:start}.panel,.detail,.side{background:var(--card);border:1px solid rgba(255,255,255,.75);box-shadow:var(--shadow);border-radius:var(--radius);backdrop-filter:blur(18px)}.panel,.side{padding:16px}.detail{min-height:calc(100vh - 118px);padding:24px}.search{width:100%;border:1px solid var(--line);background:#fff;border-radius:18px;padding:13px 14px;margin-bottom:14px;outline:none}.notice{padding:14px;border-radius:22px;background:linear-gradient(135deg,rgba(239,246,255,.95),rgba(255,255,255,.75));border:1px solid rgba(37,99,235,.12);color:var(--soft);line-height:1.7;margin-bottom:16px}.notice b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}.section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px;font-weight:950}.list{display:grid;gap:10px}.entry-card{width:100%;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.82);border-radius:24px;padding:14px;display:grid;gap:7px;color:var(--ink);transition:.18s ease}.entry-card:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(15,23,42,.08)}.entry-card.active{border-color:rgba(37,99,235,.42);box-shadow:0 14px 34px rgba(37,99,235,.10)}.entry-card.locked{cursor:not-allowed;position:relative}.entry-card.locked:after{content:'受限';position:absolute;right:12px;top:12px;border-radius:999px;background:rgba(15,23,42,.72);color:#fff;font-size:11px;font-weight:900;padding:3px 7px}.entry-card.blurred .entry-title,.entry-card.blurred .entry-preview{filter:blur(4px);user-select:none}.entry-title{font-weight:950;font-size:16px;line-height:1.35}.entry-meta,.entry-preview,.export-footer{font-size:12px;color:var(--muted);line-height:1.6;font-weight:700}.entry-tags,.detail-tags{display:flex;gap:6px;flex-wrap:wrap}.entry-tags span,.detail-tags span{border-radius:999px;background:rgba(37,99,235,.08);color:#2563eb;font-size:11px;font-weight:850;padding:4px 8px}.home-page,.detail-page{display:none}.home-page.active,.detail-page.active{display:block;animation:fadeIn .22s ease}.detail-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:20px}.detail h2{margin:8px 0 8px;font-size:42px;letter-spacing:-.055em;line-height:1.08}.pill{display:inline-flex;border-radius:999px;background:rgba(37,99,235,.10);color:var(--blue);padding:7px 11px;font-size:12px;font-weight:950}.ghost{border:1px solid var(--line);background:rgba(255,255,255,.72);border-radius:16px;padding:9px 13px;font-weight:900;color:var(--soft)}.article{font-size:16px;line-height:1.9;color:var(--soft);word-break:break-word}.article.small{font-size:14px;line-height:1.75}.article img{max-width:100%;border-radius:18px;display:block;margin:14px 0}.qa-list{display:grid;gap:16px}.qa-pair{display:grid;gap:10px}.qa-box{border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.78);padding:16px}.qa-box.answer{background:rgba(248,250,252,.9)}.qa-label{display:inline-flex;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;background:rgba(37,99,235,.10);color:var(--blue);margin-bottom:8px}.answer-label{background:rgba(226,232,240,.8);color:#334155}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{min-height:46px;border:1px solid var(--line);background:#fff;border-radius:16px;display:grid;place-items:center;padding:5px;text-align:center;overflow:hidden}.day b{font-size:12px}.day .mood{font-size:10px;color:var(--muted);font-weight:850;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.cal-head button{border:1px solid var(--line);background:#fff;border-radius:12px;width:34px;height:34px;font-weight:950}.empty{color:var(--muted);font-size:13px;padding:12px;border:1px dashed var(--line);border-radius:18px}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;background:rgba(15,23,42,.92);color:#fff;padding:11px 15px;border-radius:999px;font-weight:850;transition:.18s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}@media(max-width:900px){.shell{padding:12px}.layout{display:block}.panel,.side{margin-bottom:14px}.detail{min-height:auto;padding:18px;border-radius:26px}.detail h2{font-size:32px}.detail-head{display:grid}.article{font-size:15px}.article.small{font-size:13px}.day{min-height:43px}.top{position:static}.panel{border-radius:26px}}
 </style>
 </head>
 <body>
+<script id="public-data" type="application/json">${safeJson}<\/script>
 <div class="shell">
-  <header class="top"><div class="brand"><div class="mark">记</div><h1>${title}</h1></div><button class="ghost" data-home type="button">返回主页</button></header>
+  <header class="top"><div class="brand"><div class="mark">记</div><h1>我的日记</h1></div><button class="ghost" data-home type="button">返回主页</button></header>
   <div class="layout">
     <aside class="panel">
       <input id="search" class="search" placeholder="搜索公开内容" />
-      <div class="notice"><b>${escapeHtml(announcementData.title || "公告栏")}</b>${escapeHtml(announcementData.content || "暂无公告。")}</div>
-      <div class="section-title"><span>问答记录</span></div><div id="qaList" class="list">${qaListHtml}</div>
-      <div class="section-title"><span>普通日记</span></div><div id="normalList" class="list">${normalListHtml}</div>
+      <div id="notice" class="notice"></div>
+      <div class="section-title"><span>问答记录</span></div><div id="qaList" class="list"></div>
+      <div class="section-title"><span>普通日记</span></div><div id="normalList" class="list"></div>
     </aside>
-    <main class="detail">
-      <section id="homePage" class="home-page${initialHomeActive}">
-        <span class="pill">公开复制体</span>
-        <h2>公开主页</h2>
-        <div class="notice"><b>浏览说明</b>这个页面是从原网站导出的独立 HTML。被设置为模糊的内容只显示入口，不开放正文。</div>
-        <div class="section-title"><span>问答记录</span></div><div class="list">${qaListHtml}</div>
-        <div class="section-title"><span>普通日记</span></div><div class="list">${normalListHtml}</div>
-      </section>
-      ${detailPagesHtml || `<section class="home-page active"><span class="pill">公开复制体</span><h2>暂无可浏览内容</h2><div class="notice">可见内容为空，或全部设置为模糊/隐藏。</div></section>`}
-    </main>
-    <aside class="side"><div class="cal-head"><button id="prevMonth" type="button">‹</button><b id="calTitle">日历</b><button id="nextMonth" type="button">›</button></div><div id="calendar" class="calendar-grid"></div><div class="export-footer">导出于 ${escapeHtml(generatedText)}。编辑、新增、同步等功能暂未开放。</div></aside>
+    <main id="main" class="detail"></main>
+    <aside class="side"><div class="cal-head"><button id="prevMonth" type="button">‹</button><b id="calTitle">日历</b><button id="nextMonth" type="button">›</button></div><div id="calendar" class="calendar-grid"></div><div id="exportInfo" class="export-footer"></div></aside>
   </div>
 </div>
 <div id="toast" class="toast">暂未开放</div>
-<script id="moods-data" type="application/json">${moodsJson}${scriptClose}
 <script>
-const START_ID=${startIdJson};
-const MOODS=JSON.parse(document.getElementById('moods-data').textContent||'{}');
-let calDate=new Date();
-const $=s=>document.querySelector(s);
-const $$=s=>Array.from(document.querySelectorAll(s));
-function toast(){const t=$('#toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400)}
-function showHome(){ $$('.detail-page').forEach(x=>x.classList.remove('active')); const h=$('#homePage'); if(h)h.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
-function openEntry(id){ const btn=document.querySelector('[data-entry-id="'+CSS.escape(id)+'"]'); if(btn&&btn.dataset.locked==='1'){toast();return;} const page=document.querySelector('[data-detail-id="'+CSS.escape(id)+'"]'); if(!page){toast();return;} $$('.home-page,.detail-page').forEach(x=>x.classList.remove('active')); page.classList.add('active'); $$('.entry-card').forEach(x=>x.classList.toggle('active',x.dataset.entryId===id)); window.scrollTo({top:0,behavior:'smooth'}); }
-document.addEventListener('click',e=>{const home=e.target.closest('[data-home]'); if(home){showHome();return;} const card=e.target.closest('[data-entry-id]'); if(card){openEntry(card.dataset.entryId);}});
-const search=$('#search'); if(search)search.addEventListener('input',()=>{const kw=search.value.trim().toLowerCase(); $$('.entry-card').forEach(card=>{card.style.display=card.textContent.toLowerCase().includes(kw)?'grid':'none';});});
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function renderCal(){const grid=$('#calendar'),title=$('#calTitle'); if(!grid||!title)return; const y=calDate.getFullYear(),m=calDate.getMonth(); title.textContent=y+'年'+(m+1)+'月'; grid.innerHTML=''; '日一二三四五六'.split('').forEach(w=>{const d=document.createElement('div');d.className='day';d.innerHTML='<b>'+w+'</b>';grid.appendChild(d);}); const start=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(); for(let i=0;i<start;i++){const d=document.createElement('div');d.className='day';d.style.opacity=.32;grid.appendChild(d);} for(let day=1;day<=days;day++){const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const d=document.createElement('div');d.className='day';d.innerHTML='<b>'+day+'</b><span class="mood">'+esc(MOODS[ds]||'')+'</span>';grid.appendChild(d);}}
-const p=$('#prevMonth'),n=$('#nextMonth'); if(p)p.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCal();}; if(n)n.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCal();}; renderCal(); if(START_ID)openEntry(START_ID);
-${scriptClose}
+(function(){
+  const DATA = JSON.parse(document.getElementById('public-data').textContent || '{}');
+  const entries = Array.isArray(DATA.entries) ? DATA.entries : [];
+  const moods = DATA.moods || {};
+  let currentId = String(DATA.currentId || '');
+  let calDate = new Date();
+  const $ = (s, root=document) => root.querySelector(s);
+  const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
+  function esc(value){return String(value == null ? '' : value).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+  function toast(msg){const t=$('#toast'); if(!t)return; t.textContent=msg||'暂未开放'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500);}
+  function tagsHtml(entry){const tags=Array.isArray(entry.tags)?entry.tags:[]; return tags.length ? tags.map(t=>'<span>#'+esc(t)+'</span>').join('') : '<span>暂无标签</span>';}
+  function metaText(entry){return entry.format==='qa' ? '问答记录 · '+((entry.qaPairs||[]).length)+' 组问答' : (entry.date || '未填写日期')+' · 普通日记';}
+  function previewText(entry){return entry.access==='blur' ? '内容已模糊处理' : (entry.preview || '暂无预览');}
+  function cardHtml(entry){const locked=entry.access!=='visible'; return '<button class="entry-card '+(locked?'locked blurred':'')+'" type="button" data-entry-id="'+esc(entry.id)+'" data-locked="'+(locked?'1':'0')+'"><span class="entry-title">'+esc(entry.title||'未命名日记')+'</span><span class="entry-meta">'+esc(metaText(entry))+'</span><span class="entry-preview">'+esc(previewText(entry))+'</span><span class="entry-tags">'+tagsHtml(entry)+'</span></button>';}
+  function qaDetailHtml(entry){const pairs=Array.isArray(entry.qaPairs)?entry.qaPairs:[]; const body=pairs.length ? pairs.map((pair,i)=>'<section class="qa-pair"><div class="qa-box"><span class="qa-label">Q'+(i+1)+'</span><div class="article small">'+(pair.question||'')+'</div></div><div class="qa-box answer"><span class="qa-label answer-label">A'+(i+1)+'</span><div class="article small">'+(pair.answer||'')+'</div></div></section>').join('') : '<div class="empty">暂无问答内容</div>'; return '<div class="qa-list">'+body+'</div>';}
+  function normalDetailHtml(entry){return '<article class="article">'+(entry.content || '<p>暂无正文</p>')+'</article>';}
+  function detailHtml(entry){const isQa=entry.format==='qa'; return '<section class="detail-page" data-detail-id="'+esc(entry.id)+'"><div class="detail-head"><div><span class="pill">'+esc(isQa?'问答记录':(entry.date||'普通日记'))+'</span><h2>'+esc(entry.title||'未命名日记')+'</h2><div class="detail-tags">'+tagsHtml(entry)+'</div></div><button class="ghost" data-home type="button">返回主页</button></div>'+(isQa?qaDetailHtml(entry):normalDetailHtml(entry))+'<div class="export-footer">共 '+(entry.wordCount||0)+' 字 · 导出于 '+esc(new Date(DATA.generatedAt||Date.now()).toLocaleString('zh-CN'))+'</div></section>';}
+  function renderHome(){const visibleQa=entries.filter(e=>e.format==='qa'); const normal=entries.filter(e=>e.format!=='qa'); return '<section id="homePage" class="home-page active"><span class="pill">公开复制体</span><h2>公开主页</h2><div class="notice"><b>浏览说明</b>这个页面是从原网站导出的独立 HTML。被设置为模糊的内容只显示入口，不开放正文。</div><div class="section-title"><span>问答记录</span></div><div class="list">'+(visibleQa.map(cardHtml).join('')||'<div class="empty">暂无问答记录</div>')+'</div><div class="section-title"><span>普通日记</span></div><div class="list">'+(normal.map(cardHtml).join('')||'<div class="empty">暂无普通日记</div>')+'</div></section>';}
+  function render(){
+    const ann=DATA.announcement||{}; const notice=$('#notice'); if(notice) notice.innerHTML='<b>'+esc(ann.title||'公告栏')+'</b>'+esc(ann.content||'暂无公告。');
+    const qa=entries.filter(e=>e.format==='qa'), normal=entries.filter(e=>e.format!=='qa');
+    $('#qaList').innerHTML=qa.length?qa.map(cardHtml).join(''):'<div class="empty">暂无问答记录</div>';
+    $('#normalList').innerHTML=normal.length?normal.map(cardHtml).join(''):'<div class="empty">暂无普通日记</div>';
+    const visible=entries.filter(e=>e.access==='visible');
+    $('#main').innerHTML=renderHome()+visible.map(detailHtml).join('');
+    $('#exportInfo').textContent='导出于 '+new Date(DATA.generatedAt||Date.now()).toLocaleString('zh-CN')+'。编辑、新增、同步等功能暂未开放。';
+    if(currentId && entries.some(e=>e.id===currentId && e.access==='visible')) openEntry(currentId, true); else showHome(true);
+  }
+  function showHome(noScroll){ $$('.detail-page').forEach(x=>x.classList.remove('active')); const h=$('#homePage'); if(h)h.classList.add('active'); $$('.entry-card').forEach(x=>x.classList.remove('active')); if(!noScroll) window.scrollTo({top:0,behavior:'smooth'}); }
+  function openEntry(id,noScroll){ const entry=entries.find(e=>String(e.id)===String(id)); if(!entry || entry.access!=='visible'){toast('这篇内容暂未开放');return;} $$('.home-page,.detail-page').forEach(x=>x.classList.remove('active')); const page=$('[data-detail-id="'+String(id).replace(/"/g,'\\"')+'"]'); if(!page){toast('这篇内容暂未开放');return;} page.classList.add('active'); currentId=String(id); $$('.entry-card').forEach(x=>x.classList.toggle('active',String(x.dataset.entryId)===String(id))); if(!noScroll) window.scrollTo({top:0,behavior:'smooth'}); }
+  document.addEventListener('click', function(e){ const home=e.target.closest('[data-home]'); if(home){showHome();return;} const card=e.target.closest('[data-entry-id]'); if(card){openEntry(card.dataset.entryId);return;} });
+  const search=$('#search'); if(search) search.addEventListener('input',function(){const kw=search.value.trim().toLowerCase(); $$('.entry-card').forEach(card=>{card.style.display=card.textContent.toLowerCase().includes(kw)?'grid':'none';});});
+  function renderCal(){const grid=$('#calendar'),title=$('#calTitle'); if(!grid||!title)return; const y=calDate.getFullYear(),m=calDate.getMonth(); title.textContent=y+'年'+(m+1)+'月'; grid.innerHTML=''; '日一二三四五六'.split('').forEach(w=>{const d=document.createElement('div');d.className='day';d.innerHTML='<b>'+w+'</b>';grid.appendChild(d);}); const start=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(); for(let i=0;i<start;i++){const d=document.createElement('div');d.className='day';d.style.opacity=.32;grid.appendChild(d);} for(let day=1;day<=days;day++){const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const d=document.createElement('div');d.className='day';d.innerHTML='<b>'+day+'</b><span class="mood">'+esc(moods[ds]||'')+'</span>';grid.appendChild(d);}}
+  $('#prevMonth').onclick=function(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCal();};
+  $('#nextMonth').onclick=function(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCal();};
+  render(); renderCal();
+})();
+<\/script>
 </body>
 </html>`;
     }
