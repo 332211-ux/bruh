@@ -3568,6 +3568,151 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       showToast("已导出备份");
     }
 
+    function standalonePagePathForEntry(entry) {
+      const slug = safeFileSlug(`${entry.title || "diary"}-${entry.id || Date.now()}`);
+      return `exports/${slug}.html`;
+    }
+
+    function standalonePageUrl(path) {
+      const clean = String(path || "").replace(/^\/+/, "");
+      try {
+        if (/^https?:/i.test(location.protocol)) {
+          return new URL(clean, new URL(".", location.href)).href;
+        }
+      } catch (_) {}
+      if (config.owner && config.repo) {
+        const owner = config.owner.trim();
+        const repo = config.repo.trim();
+        const base = repo.toLowerCase() === `${owner.toLowerCase()}.github.io`
+          ? `https://${owner}.github.io/`
+          : `https://${owner}.github.io/${repo}/`;
+        return new URL(clean, base).href;
+      }
+      return clean;
+    }
+
+    function pageTextForTitle(entry) {
+      return isQaEntry(entry) ? "问答记录" : dateText(entry.date);
+    }
+
+    function buildStandaloneDiaryHtml(entry, publicUrl = "") {
+      const qaEntry = isQaEntry(entry);
+      const title = entry.title || "未命名日记";
+      const meta = pageTextForTitle(entry);
+      const tags = (entry.tags || []).map(tag => `<span class="tag"># ${escapeHtml(tag)}</span>`).join("");
+      const content = entryContentHtml(entry, "这篇日记暂时没有正文。");
+      const words = entryWordCount(entry);
+      const generatedAt = new Date().toLocaleString("zh-CN");
+      return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>${escapeHtml(title)}｜我的日记</title>
+  <meta name="description" content="${escapeHtml(title)} 的独立阅读页" />
+  <style>
+    :root{--bg:#f3f6fc;--card:rgba(255,255,255,.88);--ink:#101827;--muted:#64748b;--line:rgba(148,163,184,.28);--blue:#2563eb;--soft:#eef4ff;--shadow:0 24px 70px rgba(15,23,42,.12);--radius:28px;}
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 18% 0%,#dbeafe 0,transparent 30%),radial-gradient(circle at 95% 10%,#e0e7ff 0,transparent 28%),linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%);line-height:1.85;}
+    body::before{content:"";position:fixed;inset:0;background:linear-gradient(90deg,rgba(37,99,235,.05) 1px,transparent 1px),linear-gradient(180deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 75%);pointer-events:none;}
+    .wrap{width:min(920px,calc(100% - 36px));margin:0 auto;padding:34px 0 56px;position:relative;}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;}
+    .brand{font-weight:900;letter-spacing:.02em;color:#1e293b}.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.actions button,.actions a{border:1px solid var(--line);background:rgba(255,255,255,.72);backdrop-filter:blur(16px);border-radius:999px;padding:9px 14px;color:#334155;text-decoration:none;font-weight:800;cursor:pointer;box-shadow:0 12px 26px rgba(15,23,42,.06)}.actions button:hover,.actions a:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.35);color:#1d4ed8}
+    .hero{padding:36px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.78));box-shadow:var(--shadow);backdrop-filter:blur(22px);position:relative;overflow:hidden;}
+    .hero::after{content:"";position:absolute;right:-80px;top:-100px;width:260px;height:260px;border-radius:999px;background:radial-gradient(circle,rgba(37,99,235,.16),transparent 68%);}
+    .kicker{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-weight:900;font-size:13px;margin-bottom:18px}.title{font-size:clamp(30px,6vw,58px);line-height:1.08;margin:0 0 16px;letter-spacing:-.045em}.meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:14px}.tag{display:inline-flex;align-items:center;border:1px solid rgba(37,99,235,.16);background:rgba(37,99,235,.07);color:#1e40af;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;margin:2px 4px 2px 0}.content-card{margin-top:20px;padding:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);backdrop-filter:blur(18px);}.content :is(p,div){font-size:16px}.content img{max-width:100%;border-radius:20px;box-shadow:0 14px 36px rgba(15,23,42,.12);margin:14px 0}.content blockquote{margin:18px 0;padding:16px 18px;border-left:4px solid var(--blue);background:rgba(37,99,235,.06);border-radius:16px}.qa-view{display:grid;gap:18px}.qa-view-pair{display:grid;gap:12px}.qa-view-item{border:1px solid var(--line);border-radius:22px;padding:16px 18px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.06)}.question-card{background:linear-gradient(180deg,#fff,#f8fbff)}.answer-card{background:linear-gradient(180deg,#fff,#f9fafb)}.qa-label{display:inline-flex;align-items:center;font-size:12px;font-weight:900;color:#475569;background:#eef4ff;border-radius:999px;padding:4px 9px;margin-bottom:8px}.qa-text{font-size:14.5px;line-height:1.8}.qa-collapse-hint{display:none}.footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;box-shadow:0 16px 40px rgba(15,23,42,.25);opacity:0;pointer-events:none;transition:.25s}.toast.show{opacity:1;bottom:34px}@media(max-width:720px){.wrap{width:min(100% - 22px,720px);padding:18px 0 36px}.top{align-items:flex-start}.hero,.content-card{border-radius:24px;padding:22px}.actions{gap:8px}.actions button,.actions a{padding:8px 11px;font-size:13px}.content :is(p,div){font-size:15px}.qa-text{font-size:13.5px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">我的日记</div>
+      <div class="actions">
+        ${publicUrl ? `<button type="button" id="copyLinkBtn">复制链接</button>` : ""}
+        <a href="../index.html">返回主页</a>
+        <button type="button" data-unavailable>编辑</button>
+        <button type="button" data-unavailable>更多功能</button>
+      </div>
+    </header>
+    <section class="hero">
+      <div class="kicker">${escapeHtml(meta)}</div>
+      <h1 class="title">${escapeHtml(title)}</h1>
+      <div class="meta"><span>共 ${words} 字</span><span>生成于 ${escapeHtml(generatedAt)}</span>${qaEntry ? `<span>问答记录</span>` : `<span>普通日记</span>`}</div>
+      <div style="margin-top:12px">${tags}</div>
+    </section>
+    <main class="content-card">
+      <article class="content">${content}</article>
+    </main>
+    <div class="footer">这是一个独立阅读页面。公开链接可直接分享，其他编辑类功能暂未开放。</div>
+  </div>
+  <div id="toast" class="toast">暂未开放</div>
+  <script>
+    const toast = document.getElementById('toast');
+    function showToast(text){ toast.textContent = text || '暂未开放'; toast.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toast.classList.remove('show'),1600); }
+    document.querySelectorAll('[data-unavailable]').forEach(btn => btn.addEventListener('click', () => showToast('暂未开放')));
+    const copyBtn = document.getElementById('copyLinkBtn');
+    if(copyBtn){ copyBtn.addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); showToast('链接已复制'); } catch(e) { showToast('请手动复制地址栏链接'); } }); }
+  </script>
+</body>
+</html>`;
+    }
+
+    function downloadStandaloneDiaryPage(entry) {
+      const html = buildStandaloneDiaryHtml(entry, "");
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${safeFileSlug(entry.title || entry.id || "diary")}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function exportCurrentEntryPage() {
+      const entry = getCurrentEntry();
+      if (!entry) {
+        showToast("请先选择一篇日记");
+        return;
+      }
+      if (entry.deleted) {
+        showToast("回收站里的日记不能生成公开页");
+        return;
+      }
+      if (!hasGithubConfig() || !getToken()) {
+        downloadStandaloneDiaryPage(entry);
+        showSettings();
+        alert("要生成带独立链接的页面，需要先配置 GitHub 仓库和 Token。\n\n我已先为你下载一个本地 HTML 独立页。配置完成后再次点击“导出”，就会自动上传到 GitHub 并生成链接。");
+        return;
+      }
+      const token = getToken();
+      const exportPath = standalonePagePathForEntry(entry);
+      const publicUrl = standalonePageUrl(exportPath);
+      const html = buildStandaloneDiaryHtml(entry, publicUrl);
+      renderCloudStatus("saving", "正在生成独立页面……");
+      try {
+        const oldFile = await getGithubFile(token, exportPath);
+        await putGithubTextFile(token, exportPath, html, `Export diary page ${entry.title || entry.id}`, oldFile?.sha || null);
+        await copyText(publicUrl);
+        renderCloudStatus(null, `独立页面已生成：${publicUrl}`);
+        alert(`独立页面已生成：\n${publicUrl}\n\n链接已尝试复制到剪贴板。`);
+        showToast("已生成独立链接");
+      } catch (err) {
+        console.error(err);
+        renderCloudStatus("error", err.message || "导出失败");
+        alert(`导出失败：${err.message || err}`);
+      }
+    }
+
     document.querySelectorAll(".nav-item[data-nav-view]").forEach(item => {
       const activate = () => {
         setActiveView(item.dataset.navView);
@@ -3632,7 +3777,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     els.cancelBtn.addEventListener("click", renderAll);
     els.deleteBtn.addEventListener("click", deleteCurrentEntry);
     els.exportBtn.addEventListener("click", exportData);
-    els.exportBtnTop.addEventListener("click", exportData);
+    els.exportBtnTop.addEventListener("click", exportCurrentEntryPage);
     if (els.normalModeBtn) els.normalModeBtn.addEventListener("click", () => setEditorFormat("normal"));
     if (els.qaModeBtn) els.qaModeBtn.addEventListener("click", () => setEditorFormat("qa"));
     if (els.addQaPairBtn) els.addQaPairBtn.addEventListener("click", () => addQaBlock({ question: "", answer: "" }));
