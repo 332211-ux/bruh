@@ -576,6 +576,24 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 .modal-body { display:grid; gap: 14px; }
 .thinking-modal-grid textarea { min-height: 92px; }
 .modal-actions { margin-top: 18px; }
+
+.export-options-intro { color: var(--muted); font-size: 13px; line-height: 1.7; margin: -4px 0 2px; }
+.export-quick-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.export-quick-actions button { min-height:32px; padding:6px 10px; font-size:12px; }
+.export-options-list { display:grid; gap:10px; max-height: min(48vh, 460px); overflow:auto; padding-right: 2px; }
+.export-option-row { display:grid; grid-template-columns: 1fr 136px; gap:10px; align-items:center; padding:12px; border-radius:20px; background: rgba(248,250,252,.88); border:1px solid rgba(148,163,184,.18); }
+.export-option-row.current { border-color: rgba(37,99,235,.35); background: rgba(239,246,255,.92); }
+.export-option-main { min-width:0; display:grid; gap:5px; }
+.export-option-title { font-weight:950; color: var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.export-option-meta { color: var(--muted); font-size:12px; font-weight:700; display:flex; flex-wrap:wrap; gap:6px; }
+.export-option-select { min-height:40px; border-radius:14px; border:1px solid rgba(148,163,184,.28); background:#fff; padding:0 10px; color:var(--ink); font-weight:800; }
+.export-current-note { padding:10px 12px; border-radius:18px; background: rgba(37,99,235,.08); color: var(--ink-soft); font-size:12px; font-weight:750; line-height:1.6; }
+@media (max-width: 900px) {
+  .export-option-row { grid-template-columns: 1fr; }
+  .export-option-select { width: 100%; }
+  .export-options-list { max-height: 48svh; }
+}
+
 .mobile-overlay { display: none; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; z-index: 120;
@@ -1225,6 +1243,29 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
 
 
 
+  <div id="exportModal" class="modal-overlay" hidden>
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+      <div class="modal-head">
+        <h2 id="exportModalTitle">生成公开复制体</h2>
+        <button id="cancelExportBtn" class="icon-btn" type="button" aria-label="关闭导出设置">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="export-options-intro">导出会在 GitHub main 分支生成一个新的 HTML 文件。这里可以指定每篇内容在复制体里是“正常显示 / 模糊显示 / 不显示”。</p>
+        <div class="export-current-note">默认：当前打开的日记正常显示，普通日记正常显示，其他问答记录模糊显示。生成后的页面不会跳回原始 index。</div>
+        <div class="export-quick-actions" aria-label="导出快捷设置">
+          <button id="exportPresetSafeBtn" type="button">默认安全设置</button>
+          <button id="exportAllVisibleBtn" type="button">全部正常显示</button>
+          <button id="exportQaBlurBtn" type="button">问答全部模糊</button>
+        </div>
+        <div id="exportOptionsList" class="export-options-list" aria-label="公开内容设置"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelExportBtn2" type="button">取消</button>
+        <button id="generateExportBtn" class="primary" type="button">生成独立 HTML 链接</button>
+      </div>
+    </section>
+  </div>
+
   <div id="moodModal" class="modal-overlay" hidden>
     <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="moodModalTitle">
       <div class="modal-head">
@@ -1408,6 +1449,14 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       deleteBtn: document.getElementById("deleteBtn"),
       exportBtn: document.getElementById("exportBtn"),
       exportBtnTop: document.getElementById("exportBtnTop"),
+      exportModal: document.getElementById("exportModal"),
+      exportOptionsList: document.getElementById("exportOptionsList"),
+      cancelExportBtn: document.getElementById("cancelExportBtn"),
+      cancelExportBtn2: document.getElementById("cancelExportBtn2"),
+      generateExportBtn: document.getElementById("generateExportBtn"),
+      exportPresetSafeBtn: document.getElementById("exportPresetSafeBtn"),
+      exportAllVisibleBtn: document.getElementById("exportAllVisibleBtn"),
+      exportQaBlurBtn: document.getElementById("exportQaBlurBtn"),
       ownerInput: document.getElementById("ownerInput"),
       repoInput: document.getElementById("repoInput"),
       branchInput: document.getElementById("branchInput"),
@@ -3597,9 +3646,9 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       showToast("已导出备份");
     }
 
-    function standalonePagePathForEntry(entry) {
-      const slug = safeFileSlug(`${entry.title || "diary"}-${entry.id || Date.now()}`);
-      return `exports/${slug}-${Date.now()}.html`;
+    function publicCopyPagePath(entry) {
+      const slug = safeFileSlug(`${entry?.title || "shared-diary"}-${entry?.id || Date.now()}`);
+      return `shared/${slug}-${Date.now()}.html`;
     }
 
     function standalonePageUrl(path) {
@@ -3624,36 +3673,175 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       return isQaEntry(entry) ? "问答记录" : dateText(entry.date);
     }
 
-    function buildStandaloneDiaryHtml(entry, publicUrl = "") {
-      const title = escapeHtml(entry?.title || "我的日记");
-      const src = `../index.html?share=${encodeURIComponent(entry?.id || "")}&export=1`;
+    function exportableEntries() {
+      return nonDeletedEntries().sort(compareByManualOrder);
+    }
+
+    function defaultExportAccess(entry) {
+      if (!entry) return "hidden";
+      if (String(entry.id) === String(currentId || "")) return "visible";
+      if (isQaEntry(entry)) return "blur";
+      return "visible";
+    }
+
+    function applyExportPreset(kind) {
+      if (!els.exportOptionsList) return;
+      els.exportOptionsList.querySelectorAll("select[data-export-id]").forEach(select => {
+        const entry = entries.find(item => String(item.id) === String(select.dataset.exportId));
+        if (!entry) return;
+        if (kind === "all-visible") select.value = "visible";
+        else if (kind === "qa-blur") select.value = isQaEntry(entry) && String(entry.id) !== String(currentId || "") ? "blur" : "visible";
+        else select.value = defaultExportAccess(entry);
+      });
+    }
+
+    function renderExportOptions() {
+      if (!els.exportOptionsList) return;
+      const list = exportableEntries();
+      if (!list.length) {
+        els.exportOptionsList.innerHTML = `<div class="list-empty">暂无可导出的日记。</div>`;
+        return;
+      }
+      els.exportOptionsList.innerHTML = list.map(entry => {
+        const isCurrent = String(entry.id) === String(currentId || "");
+        const type = isQaEntry(entry) ? "问答记录" : "普通日记";
+        const meta = isQaEntry(entry)
+          ? `${type} · ${Array.isArray(entry.qaPairs) ? entry.qaPairs.length : 0} 组问答`
+          : `${type} · ${dateText(entry.date)}`;
+        const tags = entry.tags?.length ? entry.tags.slice(0, 3).map(tag => `#${escapeHtml(tag)}`).join(" ") : "暂无标签";
+        const value = defaultExportAccess(entry);
+        return `
+          <label class="export-option-row${isCurrent ? " current" : ""}">
+            <span class="export-option-main">
+              <span class="export-option-title">${escapeHtml(entry.title || "未命名日记")}${isCurrent ? " · 当前打开" : ""}</span>
+              <span class="export-option-meta"><span>${escapeHtml(meta)}</span><span>${tags}</span></span>
+            </span>
+            <select class="export-option-select" data-export-id="${escapeHtml(entry.id)}">
+              <option value="visible" ${value === "visible" ? "selected" : ""}>正常显示</option>
+              <option value="blur" ${value === "blur" ? "selected" : ""}>模糊显示</option>
+              <option value="hidden" ${value === "hidden" ? "selected" : ""}>不显示</option>
+            </select>
+          </label>`;
+      }).join("");
+    }
+
+    function openExportDialog() {
+      const entry = getCurrentEntry();
+      if (!entry) {
+        showToast("请先选择一篇日记");
+        return;
+      }
+      if (entry.deleted) {
+        showToast("回收站里的日记不能生成公开复制体");
+        return;
+      }
+      applyEditorToCurrent();
+      renderExportOptions();
+      if (els.exportModal) els.exportModal.hidden = false;
+    }
+
+    function closeExportDialog() {
+      if (els.exportModal) els.exportModal.hidden = true;
+    }
+
+    function readExportAccessMap() {
+      const map = {};
+      if (!els.exportOptionsList) return map;
+      els.exportOptionsList.querySelectorAll("select[data-export-id]").forEach(select => {
+        map[String(select.dataset.exportId)] = select.value || "hidden";
+      });
+      return map;
+    }
+
+    function publicEntryPayload(entry, access) {
+      const qa = isQaEntry(entry);
+      const payload = {
+        id: String(entry.id),
+        title: entry.title || "未命名日记",
+        date: entry.date || "",
+        tags: Array.isArray(entry.tags) ? entry.tags : [],
+        format: qa ? "qa" : "normal",
+        access,
+        wordCount: entryWordCount(entry),
+        preview: access === "blur" ? "内容已模糊处理" : entryPlainText(entry).trim().slice(0, 160)
+      };
+      if (access === "visible") {
+        if (qa) payload.qaPairs = normalizeQaPairs(entry.qaPairs || []);
+        else payload.content = entry.content || "";
+      }
+      return payload;
+    }
+
+    function buildPublicCopyData(accessMap, exportEntryId) {
+      const selected = exportableEntries().map(entry => {
+        const access = accessMap[String(entry.id)] || "hidden";
+        if (access === "hidden") return null;
+        return publicEntryPayload(entry, access);
+      }).filter(Boolean);
+      let startId = String(exportEntryId || "");
+      if (!selected.some(entry => entry.id === startId && entry.access === "visible")) {
+        startId = selected.find(entry => entry.access === "visible")?.id || selected[0]?.id || "";
+      }
+      return {
+        generatedAt: new Date().toISOString(),
+        siteTitle: "我的日记",
+        announcement: normalizeAnnouncement(announcement),
+        moods: { ...moods },
+        currentId: startId,
+        entries: selected
+      };
+    }
+
+    function buildPublicCopyHtml(data) {
+      const dataJson = JSON.stringify(data).replace(/</g, "\\u003c");
+      const scriptClose = "<" + "/script>";
       return `<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>${title}｜我的日记</title>
-  <style>
-    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#eef3ff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;}
-    iframe{display:block;width:100%;height:100svh;border:0;background:#eef3ff;}
-    .fallback{position:fixed;inset:auto 16px 16px;z-index:2;padding:10px 12px;border-radius:999px;background:rgba(15,23,42,.82);color:#fff;font-size:12px;text-align:center;}
-    .fallback a{color:#fff;font-weight:700;}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>${escapeHtml(data.siteTitle || "我的日记")}</title>
+<style>
+:root{--bg:#f4f7fb;--card:rgba(255,255,255,.84);--ink:#0f172a;--muted:#64748b;--line:rgba(148,163,184,.24);--blue:#2563eb;--violet:#7c3aed;--shadow:0 24px 70px rgba(15,23,42,.12)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 12% 0,rgba(37,99,235,.12),transparent 28%),linear-gradient(180deg,#f7f9ff,#eef3fb);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink)}button,input{font:inherit}button{border:1px solid var(--line);background:rgba(255,255,255,.78);border-radius:16px;padding:10px 14px;font-weight:850;cursor:pointer}button.primary{background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff;border-color:transparent}.shell{max-width:1420px;margin:0 auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:12px}.mark{width:42px;height:42px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff;font-weight:950;box-shadow:0 16px 34px rgba(37,99,235,.24)}h1{margin:0;font-size:24px;letter-spacing:-.05em}.layout{display:grid;grid-template-columns:320px minmax(0,1fr) 320px;gap:16px}.panel,.card,.detail,.side{background:var(--card);border:1px solid rgba(255,255,255,.78);box-shadow:var(--shadow);border-radius:30px}.panel,.side{padding:16px}.detail{min-height:calc(100vh - 120px);padding:24px}.search{width:100%;border:1px solid var(--line);background:#fff;border-radius:18px;padding:13px 14px;margin:0 0 12px}.section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px;font-weight:950}.list{display:grid;gap:10px}.entry{width:100%;text-align:left;padding:14px;border-radius:22px;background:rgba(255,255,255,.72);border:1px solid var(--line);display:grid;gap:6px}.entry.active{border-color:rgba(37,99,235,.38);box-shadow:0 12px 32px rgba(37,99,235,.10)}.entry-title{font-size:16px;font-weight:950;line-height:1.35}.meta{color:var(--muted);font-size:12px;font-weight:750;display:flex;gap:6px;flex-wrap:wrap}.preview{color:var(--muted);font-size:13px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.blurred .preview,.blurred-detail{filter:blur(5px);user-select:none}.blurred{opacity:.86}.notice{padding:12px;border-radius:18px;background:rgba(37,99,235,.08);color:#334155;font-size:13px;line-height:1.6}.detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px}.pill{display:inline-flex;border-radius:999px;background:rgba(37,99,235,.10);color:var(--blue);padding:7px 11px;font-size:12px;font-weight:900}.title{font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.06em;margin:12px 0 8px}.content{font-size:16px;line-height:1.9;color:#1e293b}.content img{max-width:100%;border-radius:18px}.qa{display:grid;gap:16px}.qa-pair{display:grid;gap:10px;padding:12px;border-radius:26px;background:rgba(248,250,252,.78)}.qa-card{padding:16px;border-radius:22px;background:#fff;border:1px solid var(--line)}.qa-label{display:inline-flex;margin-bottom:8px;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;background:rgba(37,99,235,.10);color:var(--blue)}.qa-label.a{background:rgba(226,232,240,.72);color:#334155}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{min-height:45px;border:1px solid var(--line);background:#fff;border-radius:15px;display:grid;place-items:center;padding:5px;text-align:center}.day b{font-size:12px}.mood{font-size:10px;color:var(--muted);font-weight:850;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.empty{color:var(--muted);font-size:13px;padding:12px}.locked{cursor:not-allowed}.footer{margin-top:18px;color:var(--muted);font-size:12px}.unavailable{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;background:rgba(15,23,42,.9);color:#fff;padding:11px 14px;border-radius:999px;transition:.18s;z-index:20}.unavailable.show{opacity:1;transform:translateX(-50%) translateY(0)}@media(max-width:900px){.shell{padding:12px}.top{position:static}.layout{display:block}.panel,.side{margin-bottom:14px}.side{display:block}.detail{min-height:auto;padding:18px;border-radius:26px}.desktop-only{display:none}.entry{border-radius:20px}.title{font-size:34px}.content{font-size:15px}.calendar-grid{gap:5px}.day{min-height:42px}}
+</style>
 </head>
 <body>
-  <iframe src="${src}" title="${title}" loading="eager"></iframe>
-  <noscript><div class="fallback">请开启 JavaScript 后查看独立页面。</div></noscript>
+<div class="shell">
+  <header class="top"><div class="brand"><div class="mark">记</div><h1>我的日记</h1></div><button data-action="home">返回主页</button></header>
+  <div class="layout">
+    <aside class="panel"><input id="search" class="search" placeholder="搜索公开内容"/><div id="announcement" class="notice"></div><div class="section-title"><span>问答记录</span></div><div id="qaList" class="list"></div><div class="section-title"><span>普通日记</span></div><div id="normalList" class="list"></div></aside>
+    <main id="detail" class="detail"></main>
+    <aside class="side"><div class="cal-head"><button id="prevMonth">‹</button><b id="calTitle">日历</b><button id="nextMonth">›</button></div><div id="calendar" class="calendar-grid"></div><div class="footer">这是导出的公开复制体。编辑、新增、同步等功能暂未开放。</div></aside>
+  </div>
+</div>
+<div id="toast" class="unavailable">暂未开放</div>
+<script id="share-data" type="application/json">${dataJson}${scriptClose}
+<script>
+const DATA=JSON.parse(document.getElementById("share-data").textContent||"{}");
+let currentId=DATA.currentId||"";let q="";let calDate=new Date();
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]});
+function isQa(e){return e&&e.format==="qa"}function visibleEntries(){return DATA.entries||[]}function showToast(){const t=$("#toast");t.classList.add("show");setTimeout(function(){t.classList.remove("show")},1400)}
+function contentHtml(c){const raw=String(c||"");return raw.trim()?raw:"<p>暂无内容。</p>"}
+function meta(e){return isQa(e)?("问答记录 · "+((e.qaPairs&&e.qaPairs.length)||0)+" 组问答"):((e.date||"")+" · 普通日记")}function canOpen(e){return e&&e.access==="visible"}
+function card(e){const b=document.createElement("button");b.className="entry "+(e.id===currentId?"active ":"")+(e.access==="blur"?"blurred locked":"");b.innerHTML='<span class="entry-title">'+esc(e.title)+'</span><span class="meta">'+esc(meta(e))+'</span><span class="preview">'+esc(e.access==="blur"?"内容已模糊处理":(e.preview||"暂无预览"))+'</span>';b.onclick=function(){if(!canOpen(e)){showToast();return}currentId=e.id;render()};return b}
+function renderLists(){const kw=q.toLowerCase();const all=visibleEntries().filter(function(e){return [e.title,e.preview,(e.tags||[]).join(" "),meta(e)].join(" ").toLowerCase().includes(kw)});const qa=all.filter(isQa),normal=all.filter(function(e){return !isQa(e)});const ql=$("#qaList"),nl=$("#normalList");ql.innerHTML="";nl.innerHTML="";qa.forEach(function(e){ql.appendChild(card(e))});normal.forEach(function(e){nl.appendChild(card(e))});if(!qa.length)ql.innerHTML='<div class="empty">暂无可浏览问答记录。</div>';if(!normal.length)nl.innerHTML='<div class="empty">暂无普通日记。</div>'}
+function renderDetail(){const e=visibleEntries().find(function(x){return x.id===currentId&&x.access==="visible"})||visibleEntries().find(function(x){return x.access==="visible"});const box=$("#detail");if(!e){box.innerHTML='<div class="detail-head"><div><span class="pill">公开复制体</span><h2 class="title">暂无可浏览内容</h2></div></div><p class="notice">可见内容为空，或全部设置为模糊/隐藏。</p>';return}currentId=e.id;let body="";if(isQa(e)){body='<div class="qa">'+(e.qaPairs||[]).map(function(p,i){return '<section class="qa-pair"><div class="qa-card"><span class="qa-label">Q'+(i+1)+' 我问</span><div class="content">'+contentHtml(p.question)+'</div></div><div class="qa-card"><span class="qa-label a">A'+(i+1)+' 回答</span><div class="content">'+contentHtml(p.answer)+'</div></div></section>'}).join("")+'</div>'}else{body='<article class="content">'+contentHtml(e.content)+'</article>'}box.innerHTML='<div class="detail-head"><div><span class="pill">'+esc(meta(e))+'</span><h2 class="title">'+esc(e.title)+'</h2><div class="meta">'+(e.tags||[]).map(function(t){return "#"+esc(t)}).join(" ")+'</div></div><button data-action="home">返回主页</button></div>'+body+'<div class="footer">共 '+(e.wordCount||0)+' 字</div>';box.querySelectorAll('[data-action="home"]').forEach(function(btn){btn.onclick=function(){window.scrollTo({top:0,behavior:"smooth"})}})}
+function renderCalendar(){const title=$("#calTitle"),grid=$("#calendar");const y=calDate.getFullYear(),m=calDate.getMonth();title.textContent=y+"年"+(m+1)+"月";grid.innerHTML="";"日一二三四五六".split("").forEach(function(w){const d=document.createElement("div");d.className="day";d.innerHTML="<b>"+w+"</b>";grid.appendChild(d)});const first=new Date(y,m,1),start=first.getDay(),days=new Date(y,m+1,0).getDate();for(let i=0;i<start;i++){const d=document.createElement("div");d.className="day";d.style.opacity=.35;grid.appendChild(d)}for(let day=1;day<=days;day++){const ds=y+"-"+String(m+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");const d=document.createElement("div");d.className="day";d.innerHTML="<b>"+day+"</b><span class=\"mood\">"+esc((DATA.moods&&DATA.moods[ds])||"")+"</span>";grid.appendChild(d)}}
+function renderAnnouncement(){const a=DATA.announcement||{};$("#announcement").innerHTML="<b>"+esc(a.title||"公告栏")+"</b><br>"+esc(a.content||"暂无公告。")}
+function render(){renderAnnouncement();renderLists();renderDetail();renderCalendar()}document.addEventListener("click",function(e){if(e.target.closest('[data-action="home"]')){currentId=DATA.currentId||((visibleEntries().find(function(x){return x.access==="visible"})||{}).id)||"";render();window.scrollTo({top:0,behavior:"smooth"})}});$("#search").addEventListener("input",function(e){q=e.target.value;renderLists()});$("#prevMonth").onclick=function(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()};$("#nextMonth").onclick=function(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()};render();
+${scriptClose}
 </body>
 </html>`;
     }
 
-function downloadStandaloneDiaryPage(entry) {
-      const html = buildStandaloneDiaryHtml(entry, "");
+    function downloadPublicCopyHtml(html, entry) {
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${safeFileSlug(entry.title || entry.id || "diary")}.html`;
+      a.download = `${safeFileSlug(entry?.title || entry?.id || "shared-diary")}.html`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -3669,47 +3857,51 @@ function downloadStandaloneDiaryPage(entry) {
       }
     }
 
-    async function exportCurrentEntryPage() {
+    async function generatePublicCopyPage() {
       const entry = getCurrentEntry();
       if (!entry) {
         showToast("请先选择一篇日记");
         return;
       }
-      if (entry.deleted) {
-        showToast("回收站里的日记不能生成公开页");
-        return;
-      }
       applyEditorToCurrent();
-      showToast("正在生成快速分享页……");
-      renderCloudStatus("saving", "正在生成快速分享页……");
-      if (els.exportBtnTop) els.exportBtnTop.disabled = true;
-      await new Promise(resolve => setTimeout(resolve, 30));
-      if (!hasGithubConfig() || !getToken()) {
-        downloadStandaloneDiaryPage(entry);
-        showSettings();
-        if (els.exportBtnTop) els.exportBtnTop.disabled = false;
-        renderCloudStatus(null, "已下载本地公开页草稿。配置 GitHub 后可生成线上链接。");
-        alert("要生成带独立链接的页面，需要先配置 GitHub 仓库和 Token。\n\n我已先为你下载一个本地 HTML 独立页。配置完成后再次点击“导出”，就会自动上传到 GitHub 并生成链接。");
+      const accessMap = readExportAccessMap();
+      const hasVisible = Object.values(accessMap).some(value => value === "visible");
+      if (!hasVisible) {
+        alert("至少需要选择一篇“正常显示”的内容，否则公开复制体没有可打开的页面。");
         return;
       }
-      const token = getToken();
-      const exportPath = standalonePagePathForEntry(entry);
+      const data = buildPublicCopyData(accessMap, entry.id);
+      const html = buildPublicCopyHtml(data);
+      const exportPath = publicCopyPagePath(entry);
       const publicUrl = standalonePageUrl(exportPath);
-      const html = buildStandaloneDiaryHtml(entry, publicUrl);
-      renderCloudStatus("saving", "正在上传轻量分享页……");
+      if (els.generateExportBtn) els.generateExportBtn.disabled = true;
+      renderCloudStatus("saving", "正在生成公开复制体 HTML……");
       try {
-        await putGithubTextFile(token, exportPath, html, `Export diary page ${entry.title || entry.id}`, null);
+        if (!hasGithubConfig() || !getToken()) {
+          downloadPublicCopyHtml(html, entry);
+          closeExportDialog();
+          showSettings();
+          renderCloudStatus(null, "已下载本地复制体。配置 GitHub 后可上传到 main 分支生成链接。");
+          alert("要在 main 分支生成独立 HTML 链接，需要先配置 GitHub 仓库和 Token。\n\n我已先为你下载一个本地 HTML 复制体。");
+          return;
+        }
+        await putGithubTextFile(getToken(), exportPath, html, `Create public copy ${entry.title || entry.id}`, null);
         await copyText(publicUrl);
-        renderCloudStatus(null, `独立页面已生成：${publicUrl}`);
-        alert(`独立页面已生成：\n${publicUrl}\n\n链接已尝试复制到剪贴板。`);
-        showToast("已生成独立链接");
+        closeExportDialog();
+        renderCloudStatus(null, `公开复制体已生成：${publicUrl}`);
+        alert(`公开复制体已生成：\n${publicUrl}\n\n这个页面是 main 分支中的独立 HTML 文件，链接已尝试复制。`);
+        showToast("已生成公开复制体");
       } catch (err) {
         console.error(err);
         renderCloudStatus("error", err.message || "导出失败");
         alert(`导出失败：${err.message || err}`);
       } finally {
-        if (els.exportBtnTop) els.exportBtnTop.disabled = false;
+        if (els.generateExportBtn) els.generateExportBtn.disabled = false;
       }
+    }
+
+    async function exportCurrentEntryPage() {
+      openExportDialog();
     }
 
     document.querySelectorAll(".nav-item[data-nav-view]").forEach(item => {
@@ -3777,6 +3969,13 @@ function downloadStandaloneDiaryPage(entry) {
     els.deleteBtn.addEventListener("click", deleteCurrentEntry);
     els.exportBtn.addEventListener("click", exportData);
     els.exportBtnTop.addEventListener("click", exportCurrentEntryPage);
+    if (els.cancelExportBtn) els.cancelExportBtn.addEventListener("click", closeExportDialog);
+    if (els.cancelExportBtn2) els.cancelExportBtn2.addEventListener("click", closeExportDialog);
+    if (els.exportModal) els.exportModal.addEventListener("click", (event) => { if (event.target === els.exportModal) closeExportDialog(); });
+    if (els.exportPresetSafeBtn) els.exportPresetSafeBtn.addEventListener("click", () => applyExportPreset("safe"));
+    if (els.exportAllVisibleBtn) els.exportAllVisibleBtn.addEventListener("click", () => applyExportPreset("all-visible"));
+    if (els.exportQaBlurBtn) els.exportQaBlurBtn.addEventListener("click", () => applyExportPreset("qa-blur"));
+    if (els.generateExportBtn) els.generateExportBtn.addEventListener("click", generatePublicCopyPage);
     if (els.normalModeBtn) els.normalModeBtn.addEventListener("click", () => setEditorFormat("normal"));
     if (els.qaModeBtn) els.qaModeBtn.addEventListener("click", () => setEditorFormat("qa"));
     if (els.addQaPairBtn) els.addQaPairBtn.addEventListener("click", () => addQaBlock({ question: "", answer: "" }));
