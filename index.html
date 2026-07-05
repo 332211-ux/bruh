@@ -3596,61 +3596,109 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     }
 
     function buildStandaloneDiaryHtml(entry, publicUrl = "") {
-      const qaEntry = isQaEntry(entry);
-      const title = entry.title || "未命名日记";
-      const meta = pageTextForTitle(entry);
-      const tags = (entry.tags || []).map(tag => `<span class="tag"># ${escapeHtml(tag)}</span>`).join("");
-      const content = entryContentHtml(entry, "这篇日记暂时没有正文。");
-      const words = entryWordCount(entry);
+      const currentId = entry?.id || "";
+      const allActiveEntries = sortedEntries(true).filter(item => !item.deleted);
+      const visibleEntries = allActiveEntries.filter(item => !isQaEntry(item) || item.id === currentId);
+      const hiddenQaCount = allActiveEntries.filter(item => isQaEntry(item) && item.id !== currentId).length;
+      const exportEntry = visibleEntries.find(item => item.id === currentId) || entry;
       const generatedAt = new Date().toLocaleString("zh-CN");
+      const payload = {
+        currentId,
+        publicUrl,
+        generatedAt,
+        announcement: normalizeAnnouncement(announcement),
+        moods: normalizeMoods(moods),
+        hiddenQaCount,
+        entries: visibleEntries.map(item => ({
+          id: item.id,
+          title: item.title || "未命名日记",
+          date: item.date || "",
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          format: isQaEntry(item) ? "qa" : "normal",
+          wordCount: entryWordCount(item),
+          qaCount: normalizeQaPairs(item.qaPairs || []).length,
+          excerpt: entryExcerpt(item, 92),
+          contentHtml: entryContentHtml(item, "这篇日记暂时没有正文。")
+        }))
+      };
+      const safeJson = JSON.stringify(payload)
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
+      const pageTitle = escapeHtml(exportEntry?.title || "我的日记");
       return `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>${escapeHtml(title)}｜我的日记</title>
-  <meta name="description" content="${escapeHtml(title)} 的独立阅读页" />
+  <title>${pageTitle}｜我的日记</title>
+  <meta name="description" content="${pageTitle} 的独立阅读页" />
   <style>
-    :root{--bg:#f3f6fc;--card:rgba(255,255,255,.88);--ink:#101827;--muted:#64748b;--line:rgba(148,163,184,.28);--blue:#2563eb;--soft:#eef4ff;--shadow:0 24px 70px rgba(15,23,42,.12);--radius:28px;}
-    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 18% 0%,#dbeafe 0,transparent 30%),radial-gradient(circle at 95% 10%,#e0e7ff 0,transparent 28%),linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%);line-height:1.85;}
-    body::before{content:"";position:fixed;inset:0;background:linear-gradient(90deg,rgba(37,99,235,.05) 1px,transparent 1px),linear-gradient(180deg,rgba(37,99,235,.04) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(180deg,rgba(0,0,0,.45),transparent 75%);pointer-events:none;}
-    .wrap{width:min(920px,calc(100% - 36px));margin:0 auto;padding:34px 0 56px;position:relative;}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:20px;}
-    .brand{font-weight:900;letter-spacing:.02em;color:#1e293b}.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.actions button,.actions a{border:1px solid var(--line);background:rgba(255,255,255,.72);backdrop-filter:blur(16px);border-radius:999px;padding:9px 14px;color:#334155;text-decoration:none;font-weight:800;cursor:pointer;box-shadow:0 12px 26px rgba(15,23,42,.06)}.actions button:hover,.actions a:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.35);color:#1d4ed8}
-    .hero{padding:36px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(248,250,252,.78));box-shadow:var(--shadow);backdrop-filter:blur(22px);position:relative;overflow:hidden;}
-    .hero::after{content:"";position:absolute;right:-80px;top:-100px;width:260px;height:260px;border-radius:999px;background:radial-gradient(circle,rgba(37,99,235,.16),transparent 68%);}
-    .kicker{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-weight:900;font-size:13px;margin-bottom:18px}.title{font-size:clamp(30px,6vw,58px);line-height:1.08;margin:0 0 16px;letter-spacing:-.045em}.meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:14px}.tag{display:inline-flex;align-items:center;border:1px solid rgba(37,99,235,.16);background:rgba(37,99,235,.07);color:#1e40af;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;margin:2px 4px 2px 0}.content-card{margin-top:20px;padding:34px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);backdrop-filter:blur(18px);}.content :is(p,div){font-size:16px}.content img{max-width:100%;border-radius:20px;box-shadow:0 14px 36px rgba(15,23,42,.12);margin:14px 0}.content blockquote{margin:18px 0;padding:16px 18px;border-left:4px solid var(--blue);background:rgba(37,99,235,.06);border-radius:16px}.qa-view{display:grid;gap:18px}.qa-view-pair{display:grid;gap:12px}.qa-view-item{border:1px solid var(--line);border-radius:22px;padding:16px 18px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.06)}.question-card{background:linear-gradient(180deg,#fff,#f8fbff)}.answer-card{background:linear-gradient(180deg,#fff,#f9fafb)}.qa-label{display:inline-flex;align-items:center;font-size:12px;font-weight:900;color:#475569;background:#eef4ff;border-radius:999px;padding:4px 9px;margin-bottom:8px}.qa-text{font-size:14.5px;line-height:1.8}.qa-collapse-hint{display:none}.footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;box-shadow:0 16px 40px rgba(15,23,42,.25);opacity:0;pointer-events:none;transition:.25s}.toast.show{opacity:1;bottom:34px}@media(max-width:720px){.wrap{width:min(100% - 22px,720px);padding:18px 0 36px}.top{align-items:flex-start}.hero,.content-card{border-radius:24px;padding:22px}.actions{gap:8px}.actions button,.actions a{padding:8px 11px;font-size:13px}.content :is(p,div){font-size:15px}.qa-text{font-size:13.5px}}
+    :root{--bg0:#eef3ff;--bg1:#f8faff;--panel:rgba(255,255,255,.78);--panel-solid:#fff;--ink:#101827;--ink-soft:#26354f;--muted:#6d7890;--muted2:#9aa7ba;--line:rgba(148,163,184,.28);--blue:#2563eb;--violet:#7c3aed;--soft:rgba(37,99,235,.08);--shadow:0 24px 70px rgba(15,23,42,.12);--radius:28px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+    *{box-sizing:border-box} [hidden],.hidden{display:none!important} html{scroll-behavior:smooth} body{margin:0;color:var(--ink);font-family:var(--font);background:radial-gradient(circle at 8% 4%,rgba(37,99,235,.20),transparent 28%),radial-gradient(circle at 84% 2%,rgba(124,58,237,.13),transparent 25%),linear-gradient(135deg,var(--bg0),var(--bg1) 45%,#fff);line-height:1.75;min-height:100vh;overflow-x:hidden} body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(rgba(37,99,235,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.045) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.65),transparent 86%)}
+    button{font-family:inherit;appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.74);color:var(--ink-soft);border-radius:999px;min-height:40px;padding:10px 15px;font-size:14px;font-weight:800;cursor:pointer;transition:.18s ease;box-shadow:0 10px 24px rgba(15,23,42,.05)} button:hover{transform:translateY(-1px);border-color:rgba(37,99,235,.35);color:#1d4ed8} .primary{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--blue),#5b7cff 56%,var(--violet));box-shadow:0 16px 32px rgba(37,99,235,.26)}
+    .app{width:min(1480px,calc(100% - 40px));margin:0 auto;padding:28px 0 54px}.topbar{position:sticky;top:14px;z-index:8;display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px;padding:14px 16px;border:1px solid rgba(255,255,255,.72);border-radius:999px;background:rgba(255,255,255,.70);backdrop-filter:blur(22px);box-shadow:0 14px 34px rgba(15,23,42,.08)}.brand{display:flex;gap:12px;align-items:center;font-weight:950;font-size:20px;color:#1e293b}.brand-mark{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--violet));box-shadow:0 14px 30px rgba(37,99,235,.22)}.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.layout{display:grid;grid-template-columns:300px minmax(0,1fr) 300px;gap:18px;align-items:start}.side,.right,.main{border:1px solid rgba(255,255,255,.74);background:var(--panel);backdrop-filter:blur(24px);border-radius:var(--radius);box-shadow:var(--shadow)}.side,.right{padding:18px}.main{min-height:70vh;overflow:hidden}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;font-size:15px;font-weight:950;color:#1f2a44}.notice{padding:18px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(248,250,252,.72));margin-bottom:16px}.notice h3{margin:0 0 8px;font-size:18px}.notice p{margin:0;color:var(--muted);font-size:14px}.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-weight:900;font-size:12px}.entry-list{display:grid;gap:12px}.entry-card{border:1px solid var(--line);border-radius:24px;padding:16px;background:rgba(255,255,255,.72);cursor:pointer;transition:.18s ease;position:relative;overflow:hidden}.entry-card:before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:99px;background:linear-gradient(180deg,var(--blue),var(--violet));opacity:.75}.entry-card:hover,.entry-card.active{transform:translateY(-2px);border-color:rgba(37,99,235,.28);box-shadow:0 18px 36px rgba(37,99,235,.10);background:rgba(255,255,255,.92)}.entry-card h4{margin:0 0 8px 10px;font-size:17px;line-height:1.35}.entry-card .meta{margin-left:10px;color:var(--muted);font-size:12px;font-weight:800;display:flex;gap:8px;flex-wrap:wrap}.entry-card .excerpt{margin:10px 0 0 10px;color:#667085;font-size:13px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.locked{opacity:.62;cursor:not-allowed}.reader-hero{padding:36px 42px 28px;background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(247,250,255,.66));border-bottom:1px solid var(--line)}.kicker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}.reader-title{margin:0;font-size:clamp(32px,5vw,62px);line-height:1.08;letter-spacing:-.045em}.reader-meta{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-weight:800;font-size:13px}.tag{display:inline-flex;align-items:center;border:1px solid rgba(37,99,235,.16);background:rgba(37,99,235,.07);color:#1e40af;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:900}.reader-body{padding:34px 42px 42px}.content{font-size:16px;color:#243047}.content img{max-width:100%;border-radius:20px;box-shadow:0 14px 36px rgba(15,23,42,.12);margin:14px 0}.content blockquote{margin:18px 0;padding:16px 18px;border-left:4px solid var(--blue);background:rgba(37,99,235,.06);border-radius:16px}.qa-view{display:grid;gap:18px}.qa-view-pair{display:grid;gap:12px}.qa-view-item{border:1px solid var(--line);border-radius:22px;padding:16px 18px;background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.06);cursor:pointer}.question-card{background:linear-gradient(180deg,#fff,#f8fbff)}.answer-card{background:linear-gradient(180deg,#fff,#f9fafb)}.qa-label{display:inline-flex;align-items:center;font-size:12px;font-weight:950;color:#475569;background:#eef4ff;border-radius:999px;padding:4px 9px;margin-bottom:8px}.qa-text{font-size:14px;line-height:1.8}.collapsible-card.collapsed .qa-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.qa-collapse-hint{display:block;text-align:right;margin-top:4px;color:#2563eb;font-size:12px;font-weight:900}.collapsible-card .qa-collapse-hint:after{content:"点击展开"}.collapsible-card.expanded .qa-collapse-hint:after{content:"点击收起"}.collapsible-card.expanded .qa-text{display:block}.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}.stat{padding:15px;border-radius:20px;background:rgba(255,255,255,.68);border:1px solid var(--line)}.stat b{display:block;font-size:26px}.stat span{color:var(--muted);font-size:12px;font-weight:800}.calendar{border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.68);padding:14px}.calendar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}.day-name{font-size:12px;color:var(--muted2);font-weight:900}.day{min-height:42px;border-radius:16px;display:grid;place-items:center;font-weight:900;color:#64748b}.day.has-mood{background:rgba(37,99,235,.08);color:#1d4ed8}.day.selected{background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff}.day-mood{display:block;font-size:10px;line-height:1;max-width:42px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;box-shadow:0 16px 40px rgba(15,23,42,.25);opacity:0;pointer-events:none;transition:.25s;z-index:99}.toast.show{opacity:1;bottom:34px}.footer-note{margin-top:14px;color:var(--muted);font-size:12px;line-height:1.6}@media(max-width:980px){.app{width:min(100% - 24px,760px);padding:18px 0 40px}.topbar{position:relative;top:auto;border-radius:26px;align-items:flex-start}.layout{display:block}.side,.right{margin-bottom:14px}.right{display:none}.main{border-radius:28px}.reader-hero{padding:24px}.reader-body{padding:22px}.entry-card h4{font-size:18px}.content{font-size:15px}.qa-text{font-size:13px}.top-actions button{font-size:13px;padding:9px 12px}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div class="brand">我的日记</div>
-      <div class="actions">
-        ${publicUrl ? `<button type="button" id="copyLinkBtn">复制链接</button>` : ""}
-        <a href="../index.html">返回主页</a>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark"></span><span>我的日记</span></div>
+      <div class="top-actions">
+        ${publicUrl ? `<button type="button" id="copyLinkBtn" class="primary">复制链接</button>` : ""}
         <button type="button" data-unavailable>编辑</button>
-        <button type="button" data-unavailable>更多功能</button>
+        <button type="button" data-unavailable>新增</button>
+        <button type="button" data-unavailable>设置</button>
       </div>
     </header>
-    <section class="hero">
-      <div class="kicker">${escapeHtml(meta)}</div>
-      <h1 class="title">${escapeHtml(title)}</h1>
-      <div class="meta"><span>共 ${words} 字</span><span>生成于 ${escapeHtml(generatedAt)}</span>${qaEntry ? `<span>问答记录</span>` : `<span>普通日记</span>`}</div>
-      <div style="margin-top:12px">${tags}</div>
-    </section>
-    <main class="content-card">
-      <article class="content">${content}</article>
-    </main>
-    <div class="footer">这是一个独立阅读页面。公开链接可直接分享，其他编辑类功能暂未开放。</div>
+    <div class="layout">
+      <aside class="side">
+        <section class="notice"><h3 id="noticeTitle"></h3><p id="noticeContent"></p></section>
+        <div class="section-title"><span>问答记录</span><span class="pill" id="qaAccessText"></span></div>
+        <div id="qaList" class="entry-list"></div>
+        <div class="section-title" style="margin-top:18px"><span>普通日记</span><span class="pill">可浏览</span></div>
+        <div id="normalList" class="entry-list"></div>
+        <p class="footer-note" id="limitNote"></p>
+      </aside>
+      <main class="main">
+        <section class="reader-hero">
+          <div class="kicker" id="entryKicker"></div>
+          <h1 class="reader-title" id="entryTitle"></h1>
+          <div class="reader-meta" id="entryMeta"></div>
+          <div style="margin-top:12px" id="entryTags"></div>
+        </section>
+        <section class="reader-body"><article id="entryContent" class="content"></article></section>
+      </main>
+      <aside class="right">
+        <div class="stat-grid"><div class="stat"><b id="wordCount">0</b><span>当前字数</span></div><div class="stat"><b id="entryCount">0</b><span>可浏览日记</span></div></div>
+        <section class="calendar"><div class="calendar-head"><b id="calendarTitle"></b><span class="pill">心情</span></div><div class="calendar-grid" id="calendarGrid"></div></section>
+      </aside>
+    </div>
   </div>
   <div id="toast" class="toast">暂未开放</div>
+  <script type="application/json" id="payload">${safeJson}<\/script>
   <script>
-    const toast = document.getElementById('toast');
-    function showToast(text){ toast.textContent = text || '暂未开放'; toast.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(()=>toast.classList.remove('show'),1600); }
-    document.querySelectorAll('[data-unavailable]').forEach(btn => btn.addEventListener('click', () => showToast('暂未开放')));
-    const copyBtn = document.getElementById('copyLinkBtn');
-    if(copyBtn){ copyBtn.addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); showToast('链接已复制'); } catch(e) { showToast('请手动复制地址栏链接'); } }); }
+    const DATA = JSON.parse(document.getElementById('payload').textContent || '{}');
+    let currentId = DATA.currentId;
+    const entries = Array.isArray(DATA.entries) ? DATA.entries : [];
+    const moods = DATA.moods || {};
+    const qs = function(s){ return document.querySelector(s); };
+    function escapeHtml(str){ return String(str||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;'); }
+    function showToast(text){ const t=qs('#toast'); t.textContent=text||'暂未开放'; t.classList.add('show'); clearTimeout(showToast._t); showToast._t=setTimeout(function(){t.classList.remove('show')},1700); }
+    function entryById(id){ return entries.find(function(e){return e.id === id}) || entries[0]; }
+    function isQa(e){ return e && e.format === 'qa'; }
+    function dateText(date){ if(!date) return ''; const d=new Date(date+'T00:00:00'); if(Number.isNaN(d.getTime())) return date; return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function renderCard(e){ const div=document.createElement('div'); div.className='entry-card' + (e.id===currentId?' active':''); div.tabIndex=0; let tags=''; (e.tags||[]).slice(0,2).forEach(function(t){ tags += '<span>#'+escapeHtml(t)+'</span>'; }); div.innerHTML='<h4>'+escapeHtml(e.title)+'</h4><div class="meta"><span>'+(isQa(e)?'问答记录':dateText(e.date))+'</span><span>'+(isQa(e)?((e.qaCount||0)+' 组问答'):((e.wordCount||0)+' 字'))+'</span>'+tags+'</div><div class="excerpt">'+escapeHtml(e.excerpt||'')+'</div>'; div.addEventListener('click',function(){openEntry(e.id)}); div.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openEntry(e.id)} }); return div; }
+    function renderLists(){ const qa=entries.filter(isQa); const normals=entries.filter(function(e){return !isQa(e)}); const qaList=qs('#qaList'); const nList=qs('#normalList'); qaList.innerHTML=''; nList.innerHTML=''; if(qa.length){ qa.forEach(function(e){ qaList.appendChild(renderCard(e)); }); } else { qaList.innerHTML='<div class="entry-card locked"><h4>当前页面没有开放问答记录</h4><div class="meta"><span>其他问答记录不可浏览</span></div></div>'; } if(normals.length){ normals.forEach(function(e){ nList.appendChild(renderCard(e)); }); } else { nList.innerHTML='<div class="entry-card locked"><h4>暂无普通日记</h4></div>'; } qs('#qaAccessText').textContent = qa.length ? '仅当前' : '未开放'; qs('#limitNote').textContent = DATA.hiddenQaCount ? ('已隐藏 '+DATA.hiddenQaCount+' 篇其他问答记录。这个独立页只开放当前问答记录，普通日记可以正常浏览。') : '这是一个独立阅读页，编辑类功能暂未开放。'; }
+    function openEntry(id){ const e=entryById(id); if(!e) return; currentId=e.id; renderCurrent(); renderLists(); window.scrollTo({top:0,behavior:'smooth'}); }
+    function renderCurrent(){ const e=entryById(currentId); if(!e) return; qs('#entryTitle').textContent=e.title||'未命名日记'; qs('#entryKicker').innerHTML='<span class="pill">'+(isQa(e)?'问答记录':dateText(e.date))+'</span>'; qs('#entryMeta').innerHTML='<span>'+(e.wordCount||0)+' 字</span><span>生成于 '+escapeHtml(DATA.generatedAt||'')+'</span>'+(isQa(e)?'<span>'+(e.qaCount||0)+' 组问答</span>':''); let tagHtml=''; (e.tags||[]).forEach(function(t){ tagHtml += '<span class="tag"># '+escapeHtml(t)+'</span>'; }); qs('#entryTags').innerHTML=tagHtml; qs('#entryContent').innerHTML=e.contentHtml||'<p>这篇日记暂时没有正文。</p>'; qs('#wordCount').textContent=e.wordCount||0; setupQaCards(); }
+    function setupQaCards(){ document.querySelectorAll('.collapsible-card').forEach(function(card){ const text=card.querySelector('.qa-text'); if(!text) return; requestAnimationFrame(function(){ const over=text.scrollHeight > text.clientHeight + 4; if(!over){ card.classList.remove('collapsed','expanded'); const hint=card.querySelector('.qa-collapse-hint'); if(hint) hint.style.display='none'; } }); card.addEventListener('click',function(){ if(!card.classList.contains('collapsed') && !card.classList.contains('expanded')) return; card.classList.toggle('expanded'); card.classList.toggle('collapsed'); }); }); }
+    function renderCalendar(){ const now=new Date(); const y=now.getFullYear(); const m=now.getMonth(); qs('#calendarTitle').textContent=y+'年'+(m+1)+'月'; const grid=qs('#calendarGrid'); grid.innerHTML=''; ['日','一','二','三','四','五','六'].forEach(function(d){const el=document.createElement('div'); el.className='day-name'; el.textContent=d; grid.appendChild(el)}); const first=new Date(y,m,1); const days=new Date(y,m+1,0).getDate(); for(let i=0;i<first.getDay();i++){grid.appendChild(document.createElement('div'))} for(let d=1;d<=days;d++){ const key=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); const el=document.createElement('div'); el.className='day'+(moods[key]?' has-mood':''); el.innerHTML='<span>'+d+'</span>'+(moods[key]?'<span class="day-mood">'+escapeHtml(moods[key])+'</span>':''); grid.appendChild(el); } }
+    document.querySelectorAll('[data-unavailable]').forEach(function(btn){btn.addEventListener('click',function(){showToast('暂未开放')})});
+    const copyBtn=qs('#copyLinkBtn'); if(copyBtn){ copyBtn.addEventListener('click',async function(){ try{ await navigator.clipboard.writeText(location.href); showToast('链接已复制'); }catch(e){ showToast('请手动复制地址栏链接'); } }); }
+    qs('#noticeTitle').textContent = (DATA.announcement && DATA.announcement.title) || '公告栏'; qs('#noticeContent').textContent = (DATA.announcement && DATA.announcement.content) || '这里可以写给所有访问者看的说明。'; qs('#entryCount').textContent = entries.length; renderLists(); renderCurrent(); renderCalendar();
   <\/script>
 </body>
 </html>`;
