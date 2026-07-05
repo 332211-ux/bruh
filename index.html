@@ -3880,7 +3880,18 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
     if(currentId && entries.some(e=>e.id===currentId && e.access==='visible')) openEntry(currentId, true); else showHome(true);
   }
   function showHome(noScroll){ $$('.detail-page').forEach(x=>x.classList.remove('active')); const h=$('#homePage'); if(h)h.classList.add('active'); $$('.entry-card').forEach(x=>x.classList.remove('active')); if(!noScroll) window.scrollTo({top:0,behavior:'smooth'}); }
-  function openEntry(id,noScroll){ const entry=entries.find(e=>String(e.id)===String(id)); if(!entry || entry.access!=='visible'){toast('这篇内容暂未开放');return;} $$('.home-page,.detail-page').forEach(x=>x.classList.remove('active')); const page=$('[data-detail-id="'+String(id).replace(/"/g,'\\"')+'"]'); if(!page){toast('这篇内容暂未开放');return;} page.classList.add('active'); currentId=String(id); $$('.entry-card').forEach(x=>x.classList.toggle('active',String(x.dataset.entryId)===String(id))); if(!noScroll) window.scrollTo({top:0,behavior:'smooth'}); }
+  function openEntry(id,noScroll){
+    const sid=String(id);
+    const entry=entries.find(e=>String(e.id)===sid);
+    if(!entry || entry.access!=='visible'){toast('这篇内容暂未开放');return;}
+    $$('.home-page,.detail-page').forEach(x=>x.classList.remove('active'));
+    const page=$$('.detail-page').find(x=>String(x.dataset.detailId)===sid);
+    if(!page){toast('这篇内容暂未开放');return;}
+    page.classList.add('active');
+    currentId=sid;
+    $$('.entry-card').forEach(x=>x.classList.toggle('active',String(x.dataset.entryId)===sid));
+    if(!noScroll) window.scrollTo({top:0,behavior:'smooth'});
+  }
   document.addEventListener('click', function(e){ const home=e.target.closest('[data-home]'); if(home){showHome();return;} const card=e.target.closest('[data-entry-id]'); if(card){openEntry(card.dataset.entryId);return;} });
   const search=$('#search'); if(search) search.addEventListener('input',function(){const kw=search.value.trim().toLowerCase(); $$('.entry-card').forEach(card=>{card.style.display=card.textContent.toLowerCase().includes(kw)?'grid':'none';});});
   function renderCal(){const grid=$('#calendar'),title=$('#calTitle'); if(!grid||!title)return; const y=calDate.getFullYear(),m=calDate.getMonth(); title.textContent=y+'年'+(m+1)+'月'; grid.innerHTML=''; '日一二三四五六'.split('').forEach(w=>{const d=document.createElement('div');d.className='day';d.innerHTML='<b>'+w+'</b>';grid.appendChild(d);}); const start=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(); for(let i=0;i<start;i++){const d=document.createElement('div');d.className='day';d.style.opacity=.32;grid.appendChild(d);} for(let day=1;day<=days;day++){const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const d=document.createElement('div');d.className='day';d.innerHTML='<b>'+day+'</b><span class="mood">'+esc(moods[ds]||'')+'</span>';grid.appendChild(d);}}
