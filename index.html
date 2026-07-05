@@ -3765,10 +3765,27 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
         if (hasBody || !entry.filePath) continue;
         try {
           const fileData = await fetchJsonNoStore(entry.filePath);
-          const full = normalizeEntries([{ ...entry, ...fileData, id: entry.id, filePath: entry.filePath }])[0];
+          const mergedSource = {
+            ...fileData,
+            ...entry,
+            id: entry.id,
+            filePath: entry.filePath,
+            // 导出时标题、日期、标签以目录索引里的信息为准；
+            // 有些独立正文文件只保存正文/问答，缺少 title，会把导出页变成“未命名日记”。
+            title: String(entry.title || fileData.title || fileData.name || fileData.heading || "").trim() || "未命名日记",
+            date: entry.date || fileData.date || "",
+            tags: Array.isArray(entry.tags) && entry.tags.length ? entry.tags : (Array.isArray(fileData.tags) ? fileData.tags : []),
+            format: entry.format || fileData.format || (Array.isArray(fileData.qaPairs || fileData.qa_pairs || fileData.questions) ? "qa" : "normal"),
+            content: fileData.content || entry.content || "",
+            qaPairs: fileData.qaPairs || fileData.qa_pairs || fileData.questions || entry.qaPairs || []
+          };
+          const full = normalizeEntries([mergedSource])[0];
           Object.assign(entry, full, {
             id: entry.id,
             filePath: entry.filePath,
+            title: mergedSource.title,
+            date: mergedSource.date || entry.date,
+            tags: mergedSource.tags,
             order: entry.order,
             deleted: entry.deleted,
             favorite: entry.favorite,
@@ -3784,7 +3801,7 @@ code { background: rgba(37,99,235,.08); color: var(--blue); border-radius: 8px; 
       const qa = isQaEntry(entry);
       const payload = {
         id: String(entry.id),
-        title: entry.title || "未命名日记",
+        title: String(entry.title || entry.name || entry.heading || "").trim() || "未命名日记",
         date: entry.date || "",
         tags: Array.isArray(entry.tags) ? entry.tags : [],
         format: qa ? "qa" : "normal",
