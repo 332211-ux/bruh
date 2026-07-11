@@ -370,14 +370,16 @@
       "id": "entry-2026-07-06-1783736090596",
       "filePath": "data/entries/entry-2026-07-06-1783736090596.json",
       "date": "2026-07-06",
-      "title": "新问答记录",
-      "tags": [],
+      "title": "不耐烦",
+      "tags": [
+        "正在思考"
+      ],
       "format": "qa",
       "favorite": false,
       "deleted": false,
       "order": 24,
       "createdAt": "2026-07-11T02:14:50.597Z",
-      "updatedAt": "2026-07-11T02:14:50.597Z"
+      "updatedAt": "2026-07-11T02:19:42.223Z"
     }
   ]
 }
