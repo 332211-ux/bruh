@@ -15,7 +15,7 @@
     },
     {
       "question": "<div class=\"text-base my-auto mx-auto [--thread-content-margin:var(--thread-content-margin-xs,calc(var(--spacing)*4))] @w-sm/main:[--thread-content-margin:var(--thread-content-margin-sm,calc(var(--spacing)*6))] @w-lg/main:[--thread-content-margin:var(--thread-content-margin-lg,calc(var(--spacing)*16))] px-(--thread-content-margin)\"><div class=\"[--thread-content-max-width:40rem] @w-lg/main:[--thread-content-max-width:48rem] mx-auto max-w-(--thread-content-max-width) flex-1 group/turn-messages focus-visible:outline-hidden @[53.5rem]/main:[--thread-content-max-width:48rem] relative flex w-full min-w-0 flex-col\"><div class=\"flex max-w-full flex-col gap-4 grow\"><div class=\"min-h-8 text-message relative flex w-full flex-col items-end gap-2 text-start break-words whitespace-normal outline-none keyboard-focused:focus-ring [.text-message+&amp;]:mt-1\"><div class=\"flex w-full flex-col gap-1 empty:hidden items-end rtl:items-start\"><div class=\"user-message-bubble-color corner-superellipse/0.98 relative min-w-0 overflow-hidden rounded-[22px] px-4 py-2.5 leading-6 max-w-(--user-chat-width,70%)\"><div class=\"max-w-full min-w-0 [overflow-wrap:anywhere] whitespace-pre-wrap\">我难过的点是，如果知道他去找前女友，我何必做这么没有自尊的事，我又不是贱，我何必在他去找别人的时候还上赶着被他操呢</div></div></div></div></div><div class=\"z-0 flex justify-end\"></div></div></div>",
-      "answer": "<p>对，你真正难受的不是“发生了性关系”本身，是你后来才知道：在你以为他还把你放在这段关系里时，他同时在去找前女友。</p><p>如果当时知道，你会有完整信息，也会做出完全不同的选择：不会靠近他，不会把身体和信任交给他，也不会让自己处在“他一边试别人，一边回来使用你”的位置里。</p><p>所以这不是“你贱”或者“你没有自尊”。是他隐瞒了会直接影响你选择的重要事实，让你在错误前提下做了你本来不会做的事。现在的羞耻感，其实有一部分是被他夺走了知情权之后，又反过来由你承担后果。</p><p>你真正想说的是：</p><blockquote><p>如果我当时知道你在找前女友，我根本不会这样对你敞开。我不是在完整事实下仍然选择了这个位置，是你让我在不知道的情况下站进了这个位置。</p></blockquote>"
+      "answer": "<p>对，你现在最痛的不是“我主动了”。</p><p>是：<strong>如果我当时知道完整事实，我根本不会那样做。</strong></p><p>你是在相信自己仍然是那个被他喜欢、只是关系暂时卡住的人时，才愿意靠近、愿意给他身体和亲密。可后来发现，他当时已经去找前女友了。那你会觉得自己的选择权被拿走了。</p><p>所以你现在回头看，会觉得像是：</p><p><strong>我在完全不同的前提下，做了一个本来不会做的决定。</strong></p><p>这当然会伤自尊。不是因为性本身让你没尊严，也不是因为你主动就“贱”。是因为他隐瞒的事实改变了这件事的意义。</p><p>你以为那是：</p><p><strong>我还爱你，所以我愿意靠近你。</strong></p><p>现在回头却像：</p><p><strong>你已经在试别人，我还在毫不知情地把自己交给你。</strong></p><p>这才让你觉得被羞辱。</p><p>但有一件事要分清：<strong>没有自尊的不是你当时的主动，是他让你在信息不完整的情况下做出选择。</strong><br>你当时是在按照自己知道的事实，真诚地对待喜欢的人。真正该为这个错位负责的，是隐瞒重要信息的人，不是那个被蒙在鼓里还认真付出的人。</p>"
     },
     {
       "question": "我不是要证明我不是那样的人，我只是因为不断回想到当时的画面，看到画面里发生的事情，我为我自己感到难过",
@@ -60,7 +60,7 @@
   ],
   "favorite": false,
   "deleted": false,
-  "order": 4,
+  "order": 1,
   "createdAt": "2026-06-26T06:22:17.337Z",
-  "updatedAt": "2026-07-14T00:44:35.359Z"
+  "updatedAt": "2026-07-14T06:38:55.108Z"
 }
