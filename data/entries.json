@@ -485,6 +485,19 @@
       "order": 31,
       "createdAt": "2026-07-14T00:38:22.008Z",
       "updatedAt": "2026-07-14T00:42:58.324Z"
+    },
+    {
+      "id": "entry-2026-07-15-1784045463849",
+      "filePath": "data/entries/entry-2026-07-15-1784045463849.json",
+      "date": "2026-07-15",
+      "title": "新日记",
+      "tags": [],
+      "format": "normal",
+      "favorite": false,
+      "deleted": true,
+      "order": 32,
+      "createdAt": "2026-07-14T16:11:03.849Z",
+      "updatedAt": "2026-07-14T16:11:09.061Z"
     }
   ]
 }
