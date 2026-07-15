@@ -4,8 +4,8 @@
   "entryDir": "data/entries",
   "announcement": {
     "title": "公告栏",
-    "content": "我相信你",
-    "updatedAt": "2026-07-14T16:32:03.128Z"
+    "content": "和gpt5.6聊天感觉他失去人性了",
+    "updatedAt": "2026-07-14T06:37:11.209Z"
   },
   "thinking": {
     "theme": "我正在整理自己的思考、关系里的边界，以及那些反复出现的情绪线索。",
@@ -30,15 +30,14 @@
     "2026-07-06": "哭哭",
     "2026-07-11": "哭哭",
     "2026-07-07": "哭哭",
-    "2026-07-08": "哭哭",
-    "2026-07-14": "哭哭"
+    "2026-07-08": "哭哭"
   },
   "entries": [
     {
-      "id": "entry-2026-07-14-1784040978613",
-      "filePath": "data/entries/entry-2026-07-14-1784040978613.json",
-      "date": "2026-07-14",
-      "title": "如何处理问题与家庭关系",
+      "id": "entry-2026-06-26-1782454937337",
+      "filePath": "data/entries/entry-2026-06-26-1782454937337.json",
+      "date": "2026-06-26",
+      "title": "关于我的尊严",
       "tags": [
         "正在思考"
       ],
@@ -46,8 +45,8 @@
       "favorite": false,
       "deleted": false,
       "order": 1,
-      "createdAt": "2026-07-14T14:56:18.613Z",
-      "updatedAt": "2026-07-14T16:14:31.153Z"
+      "createdAt": "2026-06-26T06:22:17.337Z",
+      "updatedAt": "2026-07-14T06:38:55.108Z"
     },
     {
       "id": "entry-2026-06-25-1782349120610",
@@ -78,10 +77,10 @@
       "updatedAt": "2026-06-25T08:01:21.170Z"
     },
     {
-      "id": "entry-2026-07-13-1783901722100",
-      "filePath": "data/entries/entry-2026-07-13-1783901722100.json",
-      "date": "2026-07-13",
-      "title": "分配",
+      "id": "entry-2026-07-08-1783815494092",
+      "filePath": "data/entries/entry-2026-07-08-1783815494092.json",
+      "date": "2026-07-08",
+      "title": "边界感",
       "tags": [
         "正在思考"
       ],
@@ -89,8 +88,8 @@
       "favorite": false,
       "deleted": false,
       "order": 4,
-      "createdAt": "2026-07-13T00:15:22.100Z",
-      "updatedAt": "2026-07-13T00:26:12.127Z"
+      "createdAt": "2026-07-12T00:18:14.092Z",
+      "updatedAt": "2026-07-13T00:29:40.777Z"
     },
     {
       "id": "entry-2026-06-25-1782375534022",
@@ -108,10 +107,10 @@
       "updatedAt": "2026-06-25T09:22:29.010Z"
     },
     {
-      "id": "entry-2026-06-26-1782454937337",
-      "filePath": "data/entries/entry-2026-06-26-1782454937337.json",
-      "date": "2026-06-26",
-      "title": "关于我的尊严",
+      "id": "entry-2026-07-06-1783736090596",
+      "filePath": "data/entries/entry-2026-07-06-1783736090596.json",
+      "date": "2026-07-06",
+      "title": "保护",
       "tags": [
         "正在思考"
       ],
@@ -119,8 +118,8 @@
       "favorite": false,
       "deleted": false,
       "order": 6,
-      "createdAt": "2026-06-26T06:22:17.337Z",
-      "updatedAt": "2026-07-14T06:38:55.108Z"
+      "createdAt": "2026-07-11T02:14:50.597Z",
+      "updatedAt": "2026-07-14T10:33:03.710Z"
     },
     {
       "id": "entry-2026-06-25-1782379150057",
@@ -151,10 +150,10 @@
       "updatedAt": "2026-06-30T09:23:10.736Z"
     },
     {
-      "id": "entry-2026-07-08-1783815494092",
-      "filePath": "data/entries/entry-2026-07-08-1783815494092.json",
-      "date": "2026-07-08",
-      "title": "边界感",
+      "id": "entry-2026-07-13-1783901722100",
+      "filePath": "data/entries/entry-2026-07-13-1783901722100.json",
+      "date": "2026-07-13",
+      "title": "分配",
       "tags": [
         "正在思考"
       ],
@@ -162,8 +161,8 @@
       "favorite": false,
       "deleted": false,
       "order": 9,
-      "createdAt": "2026-07-12T00:18:14.092Z",
-      "updatedAt": "2026-07-13T00:29:40.777Z"
+      "createdAt": "2026-07-13T00:15:22.100Z",
+      "updatedAt": "2026-07-13T00:26:12.127Z"
     },
     {
       "id": "entry-2026-06-25-1782390916656",
@@ -211,21 +210,6 @@
       "updatedAt": "2026-06-30T15:31:52.543Z"
     },
     {
-      "id": "entry-2026-07-06-1783736090596",
-      "filePath": "data/entries/entry-2026-07-06-1783736090596.json",
-      "date": "2026-07-06",
-      "title": "保护",
-      "tags": [
-        "正在思考"
-      ],
-      "format": "qa",
-      "favorite": false,
-      "deleted": false,
-      "order": 13,
-      "createdAt": "2026-07-11T02:14:50.597Z",
-      "updatedAt": "2026-07-14T10:33:03.710Z"
-    },
-    {
       "id": "entry-2026-07-12-1783827895940",
       "filePath": "data/entries/entry-2026-07-12-1783827895940.json",
       "date": "2026-07-12",
@@ -236,9 +220,24 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 14,
+      "order": 13,
       "createdAt": "2026-07-12T03:44:55.940Z",
       "updatedAt": "2026-07-12T03:51:02.101Z"
+    },
+    {
+      "id": "entry-2026-07-04-1783173389551",
+      "filePath": "data/entries/entry-2026-07-04-1783173389551.json",
+      "date": "2026-07-04",
+      "title": "关于信任",
+      "tags": [
+        "正在思考"
+      ],
+      "format": "qa",
+      "favorite": false,
+      "deleted": false,
+      "order": 14,
+      "createdAt": "2026-07-04T13:56:29.552Z",
+      "updatedAt": "2026-07-05T01:49:38.064Z"
     },
     {
       "id": "entry-2026-06-29-1782708981531",
@@ -282,10 +281,10 @@
       "updatedAt": "2026-07-01T04:34:11.564Z"
     },
     {
-      "id": "entry-2026-07-04-1783173389551",
-      "filePath": "data/entries/entry-2026-07-04-1783173389551.json",
-      "date": "2026-07-04",
-      "title": "关于信任",
+      "id": "entry-2026-07-12-1783819239709",
+      "filePath": "data/entries/entry-2026-07-12-1783819239709.json",
+      "date": "2026-07-12",
+      "title": "标准",
       "tags": [
         "正在思考"
       ],
@@ -293,8 +292,8 @@
       "favorite": false,
       "deleted": false,
       "order": 18,
-      "createdAt": "2026-07-04T13:56:29.552Z",
-      "updatedAt": "2026-07-05T01:49:38.064Z"
+      "createdAt": "2026-07-12T01:20:39.709Z",
+      "updatedAt": "2026-07-12T01:33:16.454Z"
     },
     {
       "id": "entry-2026-07-04-1783173855661",
@@ -310,21 +309,6 @@
       "updatedAt": "2026-07-04T14:04:27.179Z"
     },
     {
-      "id": "entry-2026-07-12-1783819239709",
-      "filePath": "data/entries/entry-2026-07-12-1783819239709.json",
-      "date": "2026-07-12",
-      "title": "标准",
-      "tags": [
-        "正在思考"
-      ],
-      "format": "qa",
-      "favorite": false,
-      "deleted": false,
-      "order": 20,
-      "createdAt": "2026-07-12T01:20:39.709Z",
-      "updatedAt": "2026-07-12T01:33:16.454Z"
-    },
-    {
       "id": "entry-2026-07-07-1783385776751",
       "filePath": "data/entries/entry-2026-07-07-1783385776751.json",
       "date": "2026-07-07",
@@ -335,7 +319,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 21,
+      "order": 20,
       "createdAt": "2026-07-07T00:56:16.751Z",
       "updatedAt": "2026-07-07T01:19:23.310Z"
     },
@@ -350,7 +334,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 22,
+      "order": 21,
       "createdAt": "2026-07-06T14:45:59.063Z",
       "updatedAt": "2026-07-07T09:46:27.704Z"
     },
@@ -365,7 +349,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 23,
+      "order": 22,
       "createdAt": "2026-06-29T14:02:43.765Z",
       "updatedAt": "2026-07-02T07:09:08.324Z"
     },
@@ -380,7 +364,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 24,
+      "order": 23,
       "createdAt": "2026-07-05T03:16:21.138Z",
       "updatedAt": "2026-07-05T10:36:45.845Z"
     },
@@ -395,7 +379,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 25,
+      "order": 24,
       "createdAt": "2026-06-25T09:23:35.170Z",
       "updatedAt": "2026-07-01T09:01:26.634Z"
     },
@@ -410,7 +394,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 26,
+      "order": 25,
       "createdAt": "2026-06-29T04:37:20.743Z",
       "updatedAt": "2026-06-30T15:25:15.020Z"
     },
@@ -425,7 +409,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 27,
+      "order": 26,
       "createdAt": "2026-06-26T02:27:07.419Z",
       "updatedAt": "2026-06-29T01:51:07.216Z"
     },
@@ -440,7 +424,7 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 28,
+      "order": 27,
       "createdAt": "2026-06-25T08:07:30.301Z",
       "updatedAt": "2026-06-26T02:44:52.553Z"
     },
@@ -455,9 +439,24 @@
       "format": "qa",
       "favorite": false,
       "deleted": false,
-      "order": 29,
+      "order": 28,
       "createdAt": "2026-07-07T01:24:51.782Z",
       "updatedAt": "2026-07-07T04:01:14.969Z"
+    },
+    {
+      "id": "entry-2026-07-14-1783989502008",
+      "filePath": "data/entries/entry-2026-07-14-1783989502008.json",
+      "date": "2026-07-14",
+      "title": "梦",
+      "tags": [
+        "正在思考"
+      ],
+      "format": "qa",
+      "favorite": false,
+      "deleted": false,
+      "order": 29,
+      "createdAt": "2026-07-14T00:38:22.008Z",
+      "updatedAt": "2026-07-15T00:23:55.453Z"
     },
     {
       "id": "entry-2026-07-14-1784000215464",
@@ -471,34 +470,6 @@
       "order": 30,
       "createdAt": "2026-07-14T03:36:55.464Z",
       "updatedAt": "2026-07-14T03:38:00.613Z"
-    },
-    {
-      "id": "entry-2026-07-14-1783989502008",
-      "filePath": "data/entries/entry-2026-07-14-1783989502008.json",
-      "date": "2026-07-14",
-      "title": "梦",
-      "tags": [
-        "正在思考"
-      ],
-      "format": "qa",
-      "favorite": false,
-      "deleted": false,
-      "order": 31,
-      "createdAt": "2026-07-14T00:38:22.008Z",
-      "updatedAt": "2026-07-14T00:42:58.324Z"
-    },
-    {
-      "id": "entry-2026-07-15-1784045463849",
-      "filePath": "data/entries/entry-2026-07-15-1784045463849.json",
-      "date": "2026-07-15",
-      "title": "新日记",
-      "tags": [],
-      "format": "normal",
-      "favorite": false,
-      "deleted": true,
-      "order": 32,
-      "createdAt": "2026-07-14T16:11:03.849Z",
-      "updatedAt": "2026-07-14T16:11:09.061Z"
     }
   ]
 }
